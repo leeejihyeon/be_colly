@@ -8,18 +8,19 @@ import lab.coder.colly.domain.order.domain.model.Order;
 import lab.coder.colly.domain.order.domain.policy.OrderAmountPolicy;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 주문 유스케이스 구현 서비스.
+ */
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class OrderService implements CreateOrderUseCase, GetOrderUseCase {
 
     private final OrderRepositoryPort orderRepositoryPort;
-
-    public OrderService(OrderRepositoryPort orderRepositoryPort) {
-        this.orderRepositoryPort = orderRepositoryPort;
-    }
 
     /**
      * 주문을 생성한다.
@@ -31,7 +32,12 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase {
     @Transactional
     public OrderView create(CreateOrderCommand command) {
         OrderAmountPolicy.validate(command.amount());
-        Order created = orderRepositoryPort.save(Order.create(command.userId(), command.amount()));
+        Order created = orderRepositoryPort.save(
+                Order.create(
+                        command.userId(),
+                        command.amount()
+                )
+        );
         return toView(created);
     }
 
@@ -44,7 +50,13 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase {
     @Override
     public OrderView getById(Long orderId) {
         Order order = orderRepositoryPort.findById(orderId)
-            .orElseThrow(() -> new DomainException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + orderId));
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.ORDER_NOT_FOUND,
+                                "Order not found: " + orderId
+                        )
+                );
+
         return toView(order);
     }
 
@@ -55,6 +67,10 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase {
      * @return 주문 응답 뷰
      */
     private OrderView toView(Order order) {
-        return new OrderView(order.getId(), order.getUserId(), order.getAmount());
+        return new OrderView(
+                order.getId(),
+                order.getUserId(),
+                order.getAmount()
+        );
     }
 }

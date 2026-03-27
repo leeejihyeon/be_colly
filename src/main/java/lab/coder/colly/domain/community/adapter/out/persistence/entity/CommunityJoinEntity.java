@@ -1,13 +1,6 @@
 package lab.coder.colly.domain.community.adapter.out.persistence.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lab.coder.colly.domain.community.domain.model.JoinStatus;
 import lab.coder.colly.shared.persistence.BaseEntity;
 import lombok.AccessLevel;
@@ -37,12 +30,17 @@ public class CommunityJoinEntity extends BaseEntity {
     /**
      * 모임 참여 요청/상태 엔티티를 생성한다.
      *
-     * @param id 엔티티 식별자
+     * @param id     엔티티 식별자
      * @param postId 모임글 ID
      * @param userId 참여 요청 사용자 ID
      * @param status 참여 상태
      */
-    public CommunityJoinEntity(Long id, Long postId, Long userId, JoinStatus status) {
+    public CommunityJoinEntity(
+            Long id,
+            Long postId,
+            Long userId,
+            JoinStatus status
+    ) {
         this.id = id;
         this.postId = postId;
         this.userId = userId;

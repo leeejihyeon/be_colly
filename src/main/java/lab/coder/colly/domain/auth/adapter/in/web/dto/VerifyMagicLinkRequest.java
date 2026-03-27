@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
  * @param token 발급된 매직 토큰
  */
 public record VerifyMagicLinkRequest(
-        @NotBlank String token
+        @NotBlank
+        String token
 ) {
 }

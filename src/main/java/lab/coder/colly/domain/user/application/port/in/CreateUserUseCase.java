@@ -17,8 +17,11 @@ public interface CreateUserUseCase {
      * 사용자 생성 명령.
      *
      * @param email 사용자 이메일
-     * @param name 사용자 이름
+     * @param name  사용자 이름
      */
-    record CreateUserCommand(String email, String name) {
+    record CreateUserCommand(
+            String email,
+            String name
+    ) {
     }
 }

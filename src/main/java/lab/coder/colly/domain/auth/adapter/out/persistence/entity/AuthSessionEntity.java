@@ -39,7 +39,12 @@ public class AuthSessionEntity extends BaseEntity {
      * @param refreshTokenHash 리프레시 토큰 해시값
      * @param expiresAt 세션 만료 시각
      */
-    public AuthSessionEntity(Long id, Long userId, String refreshTokenHash, LocalDateTime expiresAt) {
+    public AuthSessionEntity(
+            Long id,
+            Long userId,
+            String refreshTokenHash,
+            LocalDateTime expiresAt
+    ) {
         this.id = id;
         this.userId = userId;
         this.refreshTokenHash = refreshTokenHash;

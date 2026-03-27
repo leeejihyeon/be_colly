@@ -6,26 +6,18 @@ import lab.coder.colly.domain.user.adapter.in.web.dto.UserResponse;
 import lab.coder.colly.domain.user.application.port.in.CreateUserUseCase;
 import lab.coder.colly.domain.user.application.port.in.GetUserUseCase;
 import lab.coder.colly.domain.user.application.port.in.UserView;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final CreateUserUseCase createUserUseCase;
     private final GetUserUseCase getUserUseCase;
-
-    public UserController(CreateUserUseCase createUserUseCase, GetUserUseCase getUserUseCase) {
-        this.createUserUseCase = createUserUseCase;
-        this.getUserUseCase = getUserUseCase;
-    }
 
     /**
      * 사용자 생성 API.
@@ -34,8 +26,16 @@ public class UserController {
      * @return 생성된 사용자 응답
      */
     @PostMapping
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
-        UserView view = createUserUseCase.create(new CreateUserUseCase.CreateUserCommand(request.email(), request.name()));
+    public ResponseEntity<UserResponse> create(
+            @Valid @RequestBody CreateUserRequest request
+    ) {
+        UserView view = createUserUseCase.create(
+                new CreateUserUseCase.CreateUserCommand(
+                        request.email(),
+                        request.name()
+                )
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(view));
     }
 

@@ -24,11 +24,16 @@ public interface VerifyMagicLinkUseCase {
     /**
      * 로그인 결과.
      *
-     * @param userId 사용자 식별자
-     * @param email 사용자 이메일
-     * @param accessToken 액세스 토큰
+     * @param userId       사용자 식별자
+     * @param email        사용자 이메일
+     * @param accessToken  액세스 토큰
      * @param refreshToken 리프레시 토큰
      */
-    record LoginResult(Long userId, String email, String accessToken, String refreshToken) {
+    record LoginResult(
+            Long userId,
+            String email,
+            String accessToken,
+            String refreshToken
+    ) {
     }
 }

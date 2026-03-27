@@ -21,6 +21,9 @@ public interface CreateOrderUseCase {
      * @param userId 주문자 사용자 ID
      * @param amount 주문 금액
      */
-    record CreateOrderCommand(Long userId, BigDecimal amount) {
+    record CreateOrderCommand(
+            Long userId,
+            BigDecimal amount
+    ) {
     }
 }

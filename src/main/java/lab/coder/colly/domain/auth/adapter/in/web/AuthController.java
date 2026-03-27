@@ -2,9 +2,14 @@ package lab.coder.colly.domain.auth.adapter.in.web;
 
 import jakarta.validation.Valid;
 import lab.coder.colly.domain.auth.adapter.in.web.dto.RequestMagicLinkRequest;
+import lab.coder.colly.domain.auth.adapter.in.web.dto.SocialLoginRequest;
 import lab.coder.colly.domain.auth.adapter.in.web.dto.VerifyMagicLinkRequest;
-import lab.coder.colly.domain.auth.application.port.in.RequestMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.in.IssueMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.in.SocialLoginUseCase;
 import lab.coder.colly.domain.auth.application.port.in.VerifyMagicLinkUseCase;
+import lab.coder.colly.domain.auth.domain.model.AuthProvider;
+import lab.coder.colly.shared.error.DomainException;
+import lab.coder.colly.shared.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final RequestMagicLinkUseCase requestMagicLinkUseCase;
+    private final IssueMagicLinkUseCase issueMagicLinkUseCase;
     private final VerifyMagicLinkUseCase verifyMagicLinkUseCase;
+    private final SocialLoginUseCase socialLoginUseCase;
 
     /**
      * 매직링크 발급을 요청한다.
@@ -28,12 +34,13 @@ public class AuthController {
      * @return 발급 결과 응답
      */
     @PostMapping("/magic-link/request")
-    public ResponseEntity<RequestMagicLinkUseCase.MagicLinkRequestResult> request(
+    public ResponseEntity<IssueMagicLinkUseCase.MagicLinkIssueResult> issueMagicLink(
             @Valid @RequestBody RequestMagicLinkRequest request
     ) {
-        RequestMagicLinkUseCase.MagicLinkRequestResult result = requestMagicLinkUseCase.request(
-            new RequestMagicLinkUseCase.MagicLinkRequestCommand(request.email())
-        );
+        IssueMagicLinkUseCase.MagicLinkIssueResult result =
+                issueMagicLinkUseCase.issue(
+                        new IssueMagicLinkUseCase.MagicLinkIssueCommand(request.email())
+                );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
@@ -48,10 +55,58 @@ public class AuthController {
     public ResponseEntity<VerifyMagicLinkUseCase.LoginResult> verify(
             @Valid @RequestBody VerifyMagicLinkRequest request
     ) {
-        VerifyMagicLinkUseCase.LoginResult result = verifyMagicLinkUseCase.verify(
-            new VerifyMagicLinkUseCase.VerifyMagicLinkCommand(request.token())
-        );
+        VerifyMagicLinkUseCase.LoginResult result =
+                verifyMagicLinkUseCase.verify(
+                        new VerifyMagicLinkUseCase.VerifyMagicLinkCommand(request.token())
+                );
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 소셜 계정으로 로그인 또는 회원가입을 처리한다.
+     *
+     * @param request 소셜 로그인 요청 바디
+     * @return 로그인 결과 응답
+     */
+    @PostMapping("/social/login")
+    public ResponseEntity<SocialLoginUseCase.SocialLoginResult> socialLogin(
+            @Valid @RequestBody SocialLoginRequest request
+    ) {
+        AuthProvider provider = parseProvider(request.provider());
+
+        SocialLoginUseCase.SocialLoginResult result =
+                socialLoginUseCase.login(
+                        new SocialLoginUseCase.SocialLoginCommand(
+                                provider,
+                                request.providerUserId(),
+                                request.email(),
+                                request.name()
+                        )
+                );
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 소셜 제공자 문자열을 enum으로 변환한다.
+     *
+     * @param provider 제공자 문자열
+     * @return 소셜 제공자 enum
+     */
+    private AuthProvider parseProvider(
+            String provider
+    ) {
+        try {
+
+            return AuthProvider.valueOf(provider.trim().toUpperCase());
+
+        } catch (IllegalArgumentException ex) {
+
+            throw new DomainException(
+                    ErrorCode.AUTH_INVALID_PROVIDER,
+                    "Unsupported provider: " + provider
+            );
+        }
     }
 }

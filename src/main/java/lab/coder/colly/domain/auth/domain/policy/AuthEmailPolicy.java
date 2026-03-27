@@ -1,8 +1,9 @@
 package lab.coder.colly.domain.auth.domain.policy;
 
-import java.util.regex.Pattern;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
+
+import java.util.regex.Pattern;
 
 public final class AuthEmailPolicy {
 
@@ -18,13 +19,23 @@ public final class AuthEmailPolicy {
      * @return 정규화된 이메일(소문자, trim 처리)
      */
     public static String normalizeAndValidate(String rawEmail) {
+
         if (rawEmail == null) {
-            throw new DomainException(ErrorCode.AUTH_INVALID_EMAIL, "Email is required");
+            throw new DomainException(
+                    ErrorCode.AUTH_INVALID_EMAIL,
+                    "Email is required"
+            );
         }
+
         String normalized = rawEmail.trim().toLowerCase();
+
         if (!EMAIL_PATTERN.matcher(normalized).matches()) {
-            throw new DomainException(ErrorCode.AUTH_INVALID_EMAIL, "Email format is invalid");
+            throw new DomainException(
+                    ErrorCode.AUTH_INVALID_EMAIL,
+                    "Email format is invalid"
+            );
         }
+
         return normalized;
     }
 

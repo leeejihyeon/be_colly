@@ -17,19 +17,27 @@ public interface ReportUserUseCase {
      * 신고 요청 명령.
      *
      * @param reporterUserId 신고자 사용자 ID
-     * @param targetUserId 피신고자 사용자 ID
-     * @param reason 신고 사유
+     * @param targetUserId   피신고자 사용자 ID
+     * @param reason         신고 사유
      */
-    record ReportCommand(Long reporterUserId, Long targetUserId, String reason) {
+    record ReportCommand(
+            Long reporterUserId,
+            Long targetUserId,
+            String reason
+    ) {
     }
 
     /**
      * 신고 처리 결과.
      *
      * @param targetUserId 피신고자 사용자 ID
-     * @param reportCount 누적 신고 건수
-     * @param restricted 제재 적용 여부
+     * @param reportCount  누적 신고 건수
+     * @param restricted   제재 적용 여부
      */
-    record ReportResult(Long targetUserId, long reportCount, boolean restricted) {
+    record ReportResult(
+            Long targetUserId,
+            long reportCount,
+            boolean restricted
+    ) {
     }
 }

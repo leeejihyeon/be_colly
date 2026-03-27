@@ -5,8 +5,14 @@ import lab.coder.colly.domain.community.domain.model.PostType;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
 
+/**
+ * 커뮤니티 게시글 타입별 입력 정책을 검증하는 도메인 정책 클래스이다.
+ */
 public final class CommunityPostPolicy {
 
+    /**
+     * 인스턴스 생성을 막기 위한 기본 생성자이다.
+     */
     private CommunityPostPolicy() {
     }
 
@@ -17,22 +23,39 @@ public final class CommunityPostPolicy {
      */
     public static void validateByType(CreateCommunityPostUseCase.CreateCommunityPostCommand command) {
         if (command.type() == PostType.GATHERING) {
-            if (isBlank(command.destination()) || isBlank(command.meetingPlace())
-                || command.meetingAt() == null || command.maxParticipants() == null || command.joinPolicy() == null) {
-                throw new DomainException(ErrorCode.INVALID_POST_PAYLOAD, "Gathering post requires destination/meeting fields");
+            if (isBlank(command.destination())
+                    || isBlank(command.meetingPlace())
+                    || command.meetingAt() == null
+                    || command.maxParticipants() == null
+                    || command.joinPolicy() == null
+            ) {
+                throw new DomainException(
+                        ErrorCode.INVALID_POST_PAYLOAD,
+                        "Gathering post requires destination/meeting fields"
+                );
             }
             return;
         }
 
         if (command.type() == PostType.FREE_FEED) {
-            if (command.destination() != null || command.meetingPlace() != null
-                || command.meetingAt() != null || command.maxParticipants() != null || command.joinPolicy() != null) {
-                throw new DomainException(ErrorCode.INVALID_POST_PAYLOAD, "Free feed post cannot include gathering fields");
+            if (command.destination() != null
+                    || command.meetingPlace() != null
+                    || command.meetingAt() != null
+                    || command.maxParticipants() != null
+                    || command.joinPolicy() != null
+            ) {
+                throw new DomainException(
+                        ErrorCode.INVALID_POST_PAYLOAD,
+                        "Free feed post cannot include gathering fields"
+                );
             }
             return;
         }
 
-        throw new DomainException(ErrorCode.INVALID_POST_PAYLOAD, "Unsupported post type");
+        throw new DomainException(
+                ErrorCode.INVALID_POST_PAYLOAD,
+                "Unsupported post type"
+        );
     }
 
     /**

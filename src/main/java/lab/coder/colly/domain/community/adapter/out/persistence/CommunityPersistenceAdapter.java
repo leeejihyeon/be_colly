@@ -1,8 +1,5 @@
 package lab.coder.colly.domain.community.adapter.out.persistence;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import lab.coder.colly.domain.community.adapter.out.persistence.entity.CommunityJoinEntity;
 import lab.coder.colly.domain.community.adapter.out.persistence.entity.CommunityPostEntity;
 import lab.coder.colly.domain.community.adapter.out.persistence.entity.CommunityReportEntity;
@@ -15,33 +12,22 @@ import lab.coder.colly.domain.community.application.port.out.CommunityJoinPort;
 import lab.coder.colly.domain.community.application.port.out.CommunityPostPort;
 import lab.coder.colly.domain.community.application.port.out.CommunityReportPort;
 import lab.coder.colly.domain.community.application.port.out.UserRestrictionPort;
-import lab.coder.colly.domain.community.domain.model.CommunityJoin;
-import lab.coder.colly.domain.community.domain.model.CommunityPost;
-import lab.coder.colly.domain.community.domain.model.CommunityReport;
-import lab.coder.colly.domain.community.domain.model.JoinStatus;
-import lab.coder.colly.domain.community.domain.model.PostType;
-import lab.coder.colly.domain.community.domain.model.UserRestriction;
+import lab.coder.colly.domain.community.domain.model.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 @Component
+@RequiredArgsConstructor
 public class CommunityPersistenceAdapter implements CommunityPostPort, CommunityJoinPort, CommunityReportPort, UserRestrictionPort {
 
     private final CommunityPostJpaRepository communityPostJpaRepository;
     private final CommunityJoinJpaRepository communityJoinJpaRepository;
     private final CommunityReportJpaRepository communityReportJpaRepository;
     private final UserRestrictionJpaRepository userRestrictionJpaRepository;
-
-    public CommunityPersistenceAdapter(
-        CommunityPostJpaRepository communityPostJpaRepository,
-        CommunityJoinJpaRepository communityJoinJpaRepository,
-        CommunityReportJpaRepository communityReportJpaRepository,
-        UserRestrictionJpaRepository userRestrictionJpaRepository
-    ) {
-        this.communityPostJpaRepository = communityPostJpaRepository;
-        this.communityJoinJpaRepository = communityJoinJpaRepository;
-        this.communityReportJpaRepository = communityReportJpaRepository;
-        this.userRestrictionJpaRepository = userRestrictionJpaRepository;
-    }
 
     /**
      * 커뮤니티 게시글을 저장한다.
@@ -51,20 +37,23 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public CommunityPost save(CommunityPost post) {
-        CommunityPostEntity saved = communityPostJpaRepository.save(new CommunityPostEntity(
-            post.getId(),
-            post.getAuthorUserId(),
-            post.getCityCode(),
-            post.getType(),
-            post.getContent(),
-            post.getImageUrl(),
-            post.getLocationName(),
-            post.getDestination(),
-            post.getMeetingPlace(),
-            post.getMeetingAt(),
-            post.getMaxParticipants(),
-            post.getJoinPolicy()
-        ));
+        CommunityPostEntity saved =
+                communityPostJpaRepository.save(
+                        new CommunityPostEntity(
+                                post.getId(),
+                                post.getAuthorUserId(),
+                                post.getCityCode(),
+                                post.getType(),
+                                post.getContent(),
+                                post.getImageUrl(),
+                                post.getLocationName(),
+                                post.getDestination(),
+                                post.getMeetingPlace(),
+                                post.getMeetingAt(),
+                                post.getMaxParticipants(),
+                                post.getJoinPolicy()
+                        )
+                );
         return toDomain(saved);
     }
 
@@ -76,22 +65,29 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public Optional<CommunityPost> findPostById(Long postId) {
-        return communityPostJpaRepository.findById(postId).map(this::toDomain);
+        return communityPostJpaRepository.findById(postId)
+                .map(this::toDomain);
     }
 
     /**
      * 도시/타입 조건으로 게시글 목록을 조회한다.
      *
      * @param cityCode 도시 코드
-     * @param type 게시글 타입(ALL일 경우 null)
+     * @param type     게시글 타입(ALL일 경우 null)
      * @return 게시글 목록
      */
     @Override
-    public List<CommunityPost> findByCityCodeAndType(String cityCode, PostType type) {
+    public List<CommunityPost> findByCityCodeAndType(
+            String cityCode,
+            PostType type
+    ) {
         List<CommunityPostEntity> entities = (type == null)
-            ? communityPostJpaRepository.findByCityCodeOrderByIdDesc(cityCode)
-            : communityPostJpaRepository.findByCityCodeAndTypeOrderByIdDesc(cityCode, type);
-        return entities.stream().map(this::toDomain).toList();
+                ? communityPostJpaRepository.findByCityCodeOrderByIdDesc(cityCode)
+                : communityPostJpaRepository.findByCityCodeAndTypeOrderByIdDesc(cityCode, type);
+
+        return entities.stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     /**
@@ -102,9 +98,16 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public CommunityJoin save(CommunityJoin join) {
-        CommunityJoinEntity saved = communityJoinJpaRepository.save(
-            new CommunityJoinEntity(join.getId(), join.getPostId(), join.getUserId(), join.getStatus())
-        );
+        CommunityJoinEntity saved =
+                communityJoinJpaRepository.save(
+                        new CommunityJoinEntity(
+                                join.getId(),
+                                join.getPostId(),
+                                join.getUserId(),
+                                join.getStatus()
+                        )
+                );
+
         return toDomain(saved);
     }
 
@@ -116,7 +119,8 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public Optional<CommunityJoin> findJoinById(Long joinId) {
-        return communityJoinJpaRepository.findById(joinId).map(this::toDomain);
+        return communityJoinJpaRepository.findById(joinId)
+                .map(this::toDomain);
     }
 
     /**
@@ -127,8 +131,12 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      * @return 참여 정보 조회 결과
      */
     @Override
-    public Optional<CommunityJoin> findByPostIdAndUserId(Long postId, Long userId) {
-        return communityJoinJpaRepository.findByPostIdAndUserId(postId, userId).map(this::toDomain);
+    public Optional<CommunityJoin> findByPostIdAndUserId(
+            Long postId,
+            Long userId
+    ) {
+        return communityJoinJpaRepository.findByPostIdAndUserId(postId, userId)
+                .map(this::toDomain);
     }
 
     /**
@@ -139,7 +147,10 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public long countApprovedByPostId(Long postId) {
-        return communityJoinJpaRepository.countByPostIdAndStatus(postId, JoinStatus.APPROVED);
+        return communityJoinJpaRepository.countByPostIdAndStatus(
+                postId,
+                JoinStatus.APPROVED
+        );
     }
 
     /**
@@ -150,10 +161,22 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public CommunityReport save(CommunityReport report) {
-        CommunityReportEntity saved = communityReportJpaRepository.save(
-            new CommunityReportEntity(report.getId(), report.getReporterUserId(), report.getTargetUserId(), report.getReason())
+        CommunityReportEntity saved =
+                communityReportJpaRepository.save(
+                        new CommunityReportEntity(
+                                report.getId(),
+                                report.getReporterUserId(),
+                                report.getTargetUserId(),
+                                report.getReason()
+                        )
+                );
+
+        return CommunityReport.restore(
+                saved.getId(),
+                saved.getReporterUserId(),
+                saved.getTargetUserId(),
+                saved.getReason()
         );
-        return CommunityReport.restore(saved.getId(), saved.getReporterUserId(), saved.getTargetUserId(), saved.getReason());
     }
 
     /**
@@ -175,16 +198,18 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     @Override
     public UserRestriction save(UserRestriction restriction) {
-        UserRestrictionEntity saved = userRestrictionJpaRepository.save(
-            new UserRestrictionEntity(
-                restriction.getId(),
-                restriction.getUserId(),
-                restriction.getType(),
-                restriction.getStartAt(),
-                restriction.getEndAt(),
-                restriction.getReason()
-            )
-        );
+        UserRestrictionEntity saved =
+                userRestrictionJpaRepository.save(
+                        new UserRestrictionEntity(
+                                restriction.getId(),
+                                restriction.getUserId(),
+                                restriction.getType(),
+                                restriction.getStartAt(),
+                                restriction.getEndAt(),
+                                restriction.getReason()
+                        )
+                );
+
         return toDomain(saved);
     }
 
@@ -192,14 +217,17 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      * 현재 시점 활성 제재를 조회한다.
      *
      * @param userId 사용자 식별자
-     * @param now 기준 시각
+     * @param now    기준 시각
      * @return 활성 제재 조회 결과
      */
     @Override
-    public Optional<UserRestriction> findActiveByUserId(Long userId, LocalDateTime now) {
+    public Optional<UserRestriction> findActiveByUserId(
+            Long userId,
+            LocalDateTime now
+    ) {
         return userRestrictionJpaRepository
-            .findFirstByUserIdAndStartAtLessThanEqualAndEndAtGreaterThanEqualOrderByIdDesc(userId, now, now)
-            .map(this::toDomain);
+                .findFirstByUserIdAndStartAtLessThanEqualAndEndAtGreaterThanEqualOrderByIdDesc(userId, now, now)
+                .map(this::toDomain);
     }
 
     /**
@@ -210,18 +238,18 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     private CommunityPost toDomain(CommunityPostEntity entity) {
         return CommunityPost.restore(
-            entity.getId(),
-            entity.getAuthorUserId(),
-            entity.getCityCode(),
-            entity.getType(),
-            entity.getContent(),
-            entity.getImageUrl(),
-            entity.getLocationName(),
-            entity.getDestination(),
-            entity.getMeetingPlace(),
-            entity.getMeetingAt(),
-            entity.getMaxParticipants(),
-            entity.getJoinPolicy()
+                entity.getId(),
+                entity.getAuthorUserId(),
+                entity.getCityCode(),
+                entity.getType(),
+                entity.getContent(),
+                entity.getImageUrl(),
+                entity.getLocationName(),
+                entity.getDestination(),
+                entity.getMeetingPlace(),
+                entity.getMeetingAt(),
+                entity.getMaxParticipants(),
+                entity.getJoinPolicy()
         );
     }
 
@@ -232,7 +260,12 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      * @return 참여 도메인 모델
      */
     private CommunityJoin toDomain(CommunityJoinEntity entity) {
-        return CommunityJoin.restore(entity.getId(), entity.getPostId(), entity.getUserId(), entity.getStatus());
+        return CommunityJoin.restore(
+                entity.getId(),
+                entity.getPostId(),
+                entity.getUserId(),
+                entity.getStatus()
+        );
     }
 
     /**
@@ -243,12 +276,12 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
      */
     private UserRestriction toDomain(UserRestrictionEntity entity) {
         return UserRestriction.restore(
-            entity.getId(),
-            entity.getUserId(),
-            entity.getType(),
-            entity.getStartAt(),
-            entity.getEndAt(),
-            entity.getReason()
+                entity.getId(),
+                entity.getUserId(),
+                entity.getType(),
+                entity.getStartAt(),
+                entity.getEndAt(),
+                entity.getReason()
         );
     }
 }

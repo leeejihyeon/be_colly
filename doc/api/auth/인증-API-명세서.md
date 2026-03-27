@@ -10,12 +10,15 @@
 - 주요 기능:
   - 매직링크 발급 요청
   - 매직링크 검증 후 로그인 토큰 발급
+  - 소셜 로그인/회원가입(구글/애플/페이스북)
 
 ## 3. 공통 규칙
 - Base Path: `/api/auth`
 - 인증 방식: 로그인 전 API
 - 공통 에러 코드:
   - `AUTH_INVALID_EMAIL`
+  - `AUTH_INVALID_PROVIDER`
+  - `AUTH_INVALID_PROVIDER_USER_ID`
   - `MAGIC_LINK_RATE_LIMITED`
   - `MAGIC_LINK_NOT_FOUND`
   - `MAGIC_LINK_EXPIRED`
@@ -26,6 +29,7 @@
 |---|---|---|---|
 | 인증 | POST | `/magic-link/request` | 이메일로 매직링크 발급 요청 |
 | 인증 | POST | `/magic-link/verify` | 매직링크 토큰 검증 후 로그인 |
+| 인증 | POST | `/social/login` | 소셜 로그인/회원가입 후 로그인 |
 
 ## 5. 상세 명세
 ### 5.1 매직링크 발급
@@ -109,10 +113,53 @@
 | MAGIC_LINK_EXPIRED | Magic link expired | 만료된 토큰 |
 | MAGIC_LINK_ALREADY_USED | Magic link already used | 이미 사용된 토큰 |
 
+### 5.3 소셜 로그인/회원가입
+- Method: `POST`
+- Path: `/api/auth/social/login`
+- 설명: 소셜 제공자 계정으로 로그인한다. 최초 로그인 시 자동 회원가입/연결을 수행한다.
+
+#### Request Body
+```json
+{
+  "provider": "GOOGLE",
+  "providerUserId": "google-sub-12345",
+  "email": "hello@example.com",
+  "name": "Lee"
+}
+```
+
+#### Request Description
+| Field | Type | Required | Description |
+|---|---|---|---|
+| provider | String | Y | 소셜 제공자(`GOOGLE`, `APPLE`, `FACEBOOK`) |
+| providerUserId | String | Y | 제공자 내 사용자 고유 식별자 |
+| email | String | Y | 사용자 이메일 |
+| name | String | N | 사용자 표시 이름(없으면 이메일 기반 기본값 사용) |
+
+#### Response Body (200)
+```json
+{
+  "userId": 10,
+  "email": "hello@example.com",
+  "accessToken": "access-token",
+  "refreshToken": "refresh-token"
+}
+```
+
+#### Error Response
+| Code | Message | Description |
+|---|---|---|
+| AUTH_INVALID_PROVIDER | Unsupported provider | 지원하지 않는 소셜 제공자 |
+| AUTH_INVALID_PROVIDER_USER_ID | Provider user id is required | 제공자 사용자 식별자 누락 |
+| AUTH_INVALID_EMAIL | Email format is invalid | 이메일 형식 오류 |
+
 ## 6. 비즈니스 규칙
 - 매직링크 만료 시간은 `15분(900초)`이다.
 - 동일 이메일은 `60초` 이내 재요청 시 차단한다.
 - 매직링크는 `1회 사용` 후 재사용할 수 없다.
+- 소셜 로그인은 `provider + providerUserId`를 기준으로 계정을 식별한다.
+- 최초 소셜 로그인 시 계정이 없으면 자동 회원가입 후 인증 수단을 연결한다.
 
 ## 7. 이력
 - v0.1: 매직링크 요청/검증 API 최초 작성
+- v0.2: 소셜 로그인/회원가입 API 추가

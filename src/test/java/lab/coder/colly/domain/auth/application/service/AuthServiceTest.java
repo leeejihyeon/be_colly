@@ -7,12 +7,16 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import lab.coder.colly.domain.auth.application.port.in.RequestMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.in.IssueMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.in.SocialLoginUseCase;
 import lab.coder.colly.domain.auth.application.port.in.VerifyMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.out.AuthIdentityPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthMagicLinkPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthSessionPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthUserPort;
+import lab.coder.colly.domain.auth.domain.model.AuthIdentity;
 import lab.coder.colly.domain.auth.domain.model.AuthMagicLink;
+import lab.coder.colly.domain.auth.domain.model.AuthProvider;
 import lab.coder.colly.domain.auth.domain.model.AuthSession;
 import lab.coder.colly.domain.auth.domain.model.AuthUser;
 import lab.coder.colly.domain.auth.support.HashSupport;
@@ -35,16 +39,19 @@ class AuthServiceTest {
     @Mock
     private AuthSessionPort authSessionPort;
 
+    @Mock
+    private AuthIdentityPort authIdentityPort;
+
     @InjectMocks
     private AuthService authService;
 
     @Test
-    void request_issuesMagicToken() {
+    void issue_issuesMagicToken() {
         when(authMagicLinkPort.existsRecentByEmail(any(), any())).thenReturn(false);
         when(authMagicLinkPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        RequestMagicLinkUseCase.MagicLinkRequestResult result = authService.request(
-            new RequestMagicLinkUseCase.MagicLinkRequestCommand("hello@example.com")
+        IssueMagicLinkUseCase.MagicLinkIssueResult result = authService.issue(
+            new IssueMagicLinkUseCase.MagicLinkIssueCommand("hello@example.com")
         );
 
         assertThat(result.email()).isEqualTo("hello@example.com");
@@ -77,6 +84,24 @@ class AuthServiceTest {
         VerifyMagicLinkUseCase.LoginResult result = authService.verify(new VerifyMagicLinkUseCase.VerifyMagicLinkCommand(token));
 
         assertThat(result.userId()).isEqualTo(10L);
+        assertThat(result.accessToken()).isNotBlank();
+        assertThat(result.refreshToken()).isNotBlank();
+    }
+
+    @Test
+    void socialLogin_createsIdentityAndReturnsTokens() {
+        when(authIdentityPort.findByProviderAndProviderUserId(AuthProvider.GOOGLE, "google-sub-1")).thenReturn(Optional.empty());
+        when(authUserPort.findByEmail("social@user.com")).thenReturn(Optional.empty());
+        when(authUserPort.save(any(AuthUser.class))).thenReturn(AuthUser.restore(20L, "social@user.com", "social"));
+        when(authIdentityPort.save(any(AuthIdentity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(authSessionPort.save(any(AuthSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        SocialLoginUseCase.SocialLoginResult result = authService.login(
+            new SocialLoginUseCase.SocialLoginCommand(AuthProvider.GOOGLE, "google-sub-1", "social@user.com", "Social User")
+        );
+
+        assertThat(result.userId()).isEqualTo(20L);
+        assertThat(result.email()).isEqualTo("social@user.com");
         assertThat(result.accessToken()).isNotBlank();
         assertThat(result.refreshToken()).isNotBlank();
     }

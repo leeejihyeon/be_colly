@@ -8,18 +8,19 @@ import lab.coder.colly.domain.user.domain.model.User;
 import lab.coder.colly.domain.user.domain.policy.UserEmailPolicy;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 사용자 유스케이스 구현 서비스.
+ */
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class UserService implements CreateUserUseCase, GetUserUseCase {
 
     private final UserRepositoryPort userRepositoryPort;
-
-    public UserService(UserRepositoryPort userRepositoryPort) {
-        this.userRepositoryPort = userRepositoryPort;
-    }
 
     /**
      * 사용자를 생성한다.
@@ -30,12 +31,23 @@ public class UserService implements CreateUserUseCase, GetUserUseCase {
     @Override
     @Transactional
     public UserView create(CreateUserCommand command) {
+
         String email = UserEmailPolicy.normalizeAndValidate(command.email());
+
         if (userRepositoryPort.existsByEmail(email)) {
-            throw new DomainException(ErrorCode.DUPLICATE_EMAIL, "Email already exists");
+            throw new DomainException(
+                    ErrorCode.DUPLICATE_EMAIL,
+                    "Email already exists"
+            );
         }
 
-        User created = userRepositoryPort.save(User.create(email, command.name()));
+        User created = userRepositoryPort.save(
+                User.create(
+                        email,
+                        command.name()
+                )
+        );
+
         return toView(created);
     }
 
@@ -47,8 +59,15 @@ public class UserService implements CreateUserUseCase, GetUserUseCase {
      */
     @Override
     public UserView getById(Long userId) {
+
         User user = userRepositoryPort.findById(userId)
-            .orElseThrow(() -> new DomainException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId));
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.USER_NOT_FOUND,
+                                "User not found: " + userId
+                        )
+                );
+
         return toView(user);
     }
 
@@ -59,6 +78,10 @@ public class UserService implements CreateUserUseCase, GetUserUseCase {
      * @return 사용자 응답 뷰
      */
     private UserView toView(User user) {
-        return new UserView(user.getId(), user.getEmail(), user.getName());
+        return new UserView(
+                user.getId(),
+                user.getEmail(),
+                user.getName()
+        );
     }
 }

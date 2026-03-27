@@ -1,42 +1,34 @@
 package lab.coder.colly.domain.community.application.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import lab.coder.colly.domain.community.application.port.in.CommunityJoinView;
-import lab.coder.colly.domain.community.application.port.in.CommunityPostView;
-import lab.coder.colly.domain.community.application.port.in.CreateCommunityPostUseCase;
-import lab.coder.colly.domain.community.application.port.in.GetRestrictionUseCase;
-import lab.coder.colly.domain.community.application.port.in.JoinCommunityUseCase;
-import lab.coder.colly.domain.community.application.port.in.ListCommunityPostsUseCase;
-import lab.coder.colly.domain.community.application.port.in.ReportUserUseCase;
-import lab.coder.colly.domain.community.application.port.in.ReviewCommunityJoinUseCase;
+import lab.coder.colly.domain.community.application.port.in.*;
 import lab.coder.colly.domain.community.application.port.out.CommunityJoinPort;
 import lab.coder.colly.domain.community.application.port.out.CommunityPostPort;
 import lab.coder.colly.domain.community.application.port.out.CommunityReportPort;
 import lab.coder.colly.domain.community.application.port.out.UserRestrictionPort;
-import lab.coder.colly.domain.community.domain.model.CommunityJoin;
-import lab.coder.colly.domain.community.domain.model.CommunityPost;
-import lab.coder.colly.domain.community.domain.model.CommunityReport;
-import lab.coder.colly.domain.community.domain.model.JoinPolicy;
-import lab.coder.colly.domain.community.domain.model.JoinStatus;
-import lab.coder.colly.domain.community.domain.model.PostType;
-import lab.coder.colly.domain.community.domain.model.RestrictionType;
-import lab.coder.colly.domain.community.domain.model.UserRestriction;
+import lab.coder.colly.domain.community.domain.model.*;
 import lab.coder.colly.domain.community.domain.policy.CommunityPostPolicy;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 커뮤니티 유스케이스 구현 서비스.
+ */
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class CommunityService implements
-    CreateCommunityPostUseCase,
-    ListCommunityPostsUseCase,
-    JoinCommunityUseCase,
-    ReviewCommunityJoinUseCase,
-    ReportUserUseCase,
-    GetRestrictionUseCase {
+        CreateCommunityPostUseCase,
+        ListCommunityPostsUseCase,
+        JoinCommunityUseCase,
+        ReviewCommunityJoinUseCase,
+        ReportUserUseCase,
+        GetRestrictionUseCase {
 
     private static final long REPORT_THRESHOLD = 3L;
 
@@ -44,18 +36,6 @@ public class CommunityService implements
     private final CommunityJoinPort communityJoinPort;
     private final CommunityReportPort communityReportPort;
     private final UserRestrictionPort userRestrictionPort;
-
-    public CommunityService(
-        CommunityPostPort communityPostPort,
-        CommunityJoinPort communityJoinPort,
-        CommunityReportPort communityReportPort,
-        UserRestrictionPort userRestrictionPort
-    ) {
-        this.communityPostPort = communityPostPort;
-        this.communityJoinPort = communityJoinPort;
-        this.communityReportPort = communityReportPort;
-        this.userRestrictionPort = userRestrictionPort;
-    }
 
     /**
      * 커뮤니티 게시글을 생성한다.
@@ -66,22 +46,26 @@ public class CommunityService implements
     @Override
     @Transactional
     public CommunityPostView createPost(CreateCommunityPostCommand command) {
+
         ensureNotRestricted(command.authorUserId());
         CommunityPostPolicy.validateByType(command);
 
-        CommunityPost saved = communityPostPort.save(CommunityPost.create(
-            command.authorUserId(),
-            command.cityCode(),
-            command.type(),
-            command.content(),
-            command.imageUrl(),
-            command.locationName(),
-            command.destination(),
-            command.meetingPlace(),
-            command.meetingAt(),
-            command.maxParticipants(),
-            command.joinPolicy()
-        ));
+        CommunityPost saved =
+                communityPostPort.save(
+                        CommunityPost.create(
+                                command.authorUserId(),
+                                command.cityCode(),
+                                command.type(),
+                                command.content(),
+                                command.imageUrl(),
+                                command.locationName(),
+                                command.destination(),
+                                command.meetingPlace(),
+                                command.meetingAt(),
+                                command.maxParticipants(),
+                                command.joinPolicy()
+                        )
+                );
 
         return toPostView(saved);
     }
@@ -94,9 +78,13 @@ public class CommunityService implements
      */
     @Override
     public List<CommunityPostView> list(ListCommunityPostsQuery query) {
+
         PostType type = query.type();
         List<CommunityPost> posts = communityPostPort.findByCityCodeAndType(query.cityCode(), type);
-        return posts.stream().map(this::toPostView).toList();
+
+        return posts.stream()
+                .map(this::toPostView)
+                .toList();
     }
 
     /**
@@ -108,31 +96,55 @@ public class CommunityService implements
     @Override
     @Transactional
     public CommunityJoinView join(JoinCommunityCommand command) {
+
         ensureNotRestricted(command.userId());
 
         CommunityPost post = communityPostPort.findPostById(command.postId())
-            .orElseThrow(() -> new DomainException(ErrorCode.POST_NOT_FOUND, "Post not found: " + command.postId()));
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.POST_NOT_FOUND,
+                                "Post not found: " + command.postId())
+                );
 
         if (post.getType() != PostType.GATHERING) {
-            throw new DomainException(ErrorCode.JOIN_NOT_ALLOWED, "Only gathering posts can be joined");
+            throw new DomainException(
+                    ErrorCode.JOIN_NOT_ALLOWED,
+                    "Only gathering posts can be joined"
+            );
         }
 
         communityJoinPort.findByPostIdAndUserId(command.postId(), command.userId())
-            .ifPresent(existing -> {
-                if (existing.getStatus() != JoinStatus.CANCELED) {
-                    throw new DomainException(ErrorCode.JOIN_ALREADY_EXISTS, "Join already exists");
-                }
-            });
+                .ifPresent(existing -> {
+                    if (existing.getStatus() != JoinStatus.CANCELED) {
+                        throw new DomainException(
+                                ErrorCode.JOIN_ALREADY_EXISTS,
+                                "Join already exists"
+                        );
+                    }
+                });
 
-        JoinStatus initStatus = post.getJoinPolicy() == JoinPolicy.APPROVAL ? JoinStatus.PENDING : JoinStatus.APPROVED;
+        JoinStatus initStatus = post.getJoinPolicy() == JoinPolicy.APPROVAL
+                ? JoinStatus.PENDING
+                : JoinStatus.APPROVED;
+
         if (initStatus == JoinStatus.APPROVED && post.getMaxParticipants() != null) {
             long approvedCount = communityJoinPort.countApprovedByPostId(post.getId());
             if (approvedCount >= post.getMaxParticipants()) {
-                throw new DomainException(ErrorCode.JOIN_NOT_ALLOWED, "Gathering is full");
+                throw new DomainException(
+                        ErrorCode.JOIN_NOT_ALLOWED,
+                        "Gathering is full"
+                );
             }
         }
 
-        CommunityJoin saved = communityJoinPort.save(CommunityJoin.create(post.getId(), command.userId(), initStatus));
+        CommunityJoin saved = communityJoinPort.save(
+                CommunityJoin.create(
+                        post.getId(),
+                        command.userId(),
+                        initStatus
+                )
+        );
+
         return toJoinView(saved);
     }
 
@@ -148,31 +160,54 @@ public class CommunityService implements
         ensureNotRestricted(command.hostUserId());
 
         CommunityJoin join = communityJoinPort.findJoinById(command.joinId())
-            .orElseThrow(() -> new DomainException(ErrorCode.JOIN_NOT_FOUND, "Join not found: " + command.joinId()));
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.JOIN_NOT_FOUND,
+                                "Join not found: " + command.joinId()
+                        )
+                );
 
         CommunityPost post = communityPostPort.findPostById(join.getPostId())
-            .orElseThrow(() -> new DomainException(ErrorCode.POST_NOT_FOUND, "Post not found: " + join.getPostId()));
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.POST_NOT_FOUND,
+                                "Post not found: " + join.getPostId()
+                        )
+                );
 
         if (!post.getAuthorUserId().equals(command.hostUserId())) {
-            throw new DomainException(ErrorCode.FORBIDDEN_ACTION, "Only host can review joins");
+            throw new DomainException(
+                    ErrorCode.FORBIDDEN_ACTION,
+                    "Only host can review joins"
+            );
         }
 
         if (post.getType() != PostType.GATHERING || post.getJoinPolicy() != JoinPolicy.APPROVAL) {
-            throw new DomainException(ErrorCode.JOIN_NOT_ALLOWED, "Review is allowed only for approval gathering");
+            throw new DomainException(
+                    ErrorCode.JOIN_NOT_ALLOWED,
+                    "Review is allowed only for approval gathering"
+            );
         }
 
         if (command.status() != JoinStatus.APPROVED && command.status() != JoinStatus.REJECTED) {
-            throw new DomainException(ErrorCode.JOIN_NOT_ALLOWED, "Review status must be APPROVED or REJECTED");
+            throw new DomainException(
+                    ErrorCode.JOIN_NOT_ALLOWED,
+                    "Review status must be APPROVED or REJECTED"
+            );
         }
 
         if (command.status() == JoinStatus.APPROVED && post.getMaxParticipants() != null) {
             long approvedCount = communityJoinPort.countApprovedByPostId(post.getId());
             if (approvedCount >= post.getMaxParticipants()) {
-                throw new DomainException(ErrorCode.JOIN_NOT_ALLOWED, "Gathering is full");
+                throw new DomainException(
+                        ErrorCode.JOIN_NOT_ALLOWED,
+                        "Gathering is full"
+                );
             }
         }
 
         CommunityJoin updated = communityJoinPort.save(join.changeStatus(command.status()));
+
         return toJoinView(updated);
     }
 
@@ -185,7 +220,15 @@ public class CommunityService implements
     @Override
     @Transactional
     public ReportResult report(ReportCommand command) {
-        communityReportPort.save(CommunityReport.create(command.reporterUserId(), command.targetUserId(), command.reason()));
+
+        communityReportPort.save(
+                CommunityReport.create(
+                        command.reporterUserId(),
+                        command.targetUserId(),
+                        command.reason()
+                )
+        );
+
         long count = communityReportPort.countByTargetUserId(command.targetUserId());
 
         boolean restricted = false;
@@ -193,18 +236,24 @@ public class CommunityService implements
             LocalDateTime now = LocalDateTime.now();
             boolean active = userRestrictionPort.findActiveByUserId(command.targetUserId(), now).isPresent();
             if (!active) {
-                userRestrictionPort.save(UserRestriction.create(
-                    command.targetUserId(),
-                    RestrictionType.COMMUNITY_ACTIVITY_BAN,
-                    now,
-                    now.plusDays(7),
-                    "3 reports accumulated"
-                ));
+                userRestrictionPort.save(
+                        UserRestriction.create(
+                                command.targetUserId(),
+                                RestrictionType.COMMUNITY_ACTIVITY_BAN,
+                                now,
+                                now.plusDays(7),
+                                "3 reports accumulated"
+                        )
+                );
             }
             restricted = true;
         }
 
-        return new ReportResult(command.targetUserId(), count, restricted);
+        return new ReportResult(
+                command.targetUserId(),
+                count,
+                restricted
+        );
     }
 
     /**
@@ -216,8 +265,22 @@ public class CommunityService implements
     @Override
     public RestrictionView getActiveRestriction(Long userId) {
         return userRestrictionPort.findActiveByUserId(userId, LocalDateTime.now())
-            .map(r -> new RestrictionView(true, r.getStartAt(), r.getEndAt(), r.getReason()))
-            .orElse(new RestrictionView(false, null, null, null));
+                .map(r ->
+                        new RestrictionView(
+                                true,
+                                r.getStartAt(),
+                                r.getEndAt(),
+                                r.getReason()
+                        )
+                )
+                .orElse(
+                        new RestrictionView(
+                                false,
+                                null,
+                                null,
+                                null
+                        )
+                );
     }
 
     /**
@@ -227,9 +290,12 @@ public class CommunityService implements
      */
     private void ensureNotRestricted(Long userId) {
         userRestrictionPort.findActiveByUserId(userId, LocalDateTime.now())
-            .ifPresent(r -> {
-                throw new DomainException(ErrorCode.USER_RESTRICTED, "User is restricted until " + r.getEndAt());
-            });
+                .ifPresent(r -> {
+                    throw new DomainException(
+                            ErrorCode.USER_RESTRICTED,
+                            "User is restricted until " + r.getEndAt()
+                    );
+                });
     }
 
     /**
@@ -240,18 +306,18 @@ public class CommunityService implements
      */
     private CommunityPostView toPostView(CommunityPost post) {
         return new CommunityPostView(
-            post.getId(),
-            post.getAuthorUserId(),
-            post.getCityCode(),
-            post.getType(),
-            post.getContent(),
-            post.getImageUrl(),
-            post.getLocationName(),
-            post.getDestination(),
-            post.getMeetingPlace(),
-            post.getMeetingAt(),
-            post.getMaxParticipants(),
-            post.getJoinPolicy()
+                post.getId(),
+                post.getAuthorUserId(),
+                post.getCityCode(),
+                post.getType(),
+                post.getContent(),
+                post.getImageUrl(),
+                post.getLocationName(),
+                post.getDestination(),
+                post.getMeetingPlace(),
+                post.getMeetingAt(),
+                post.getMaxParticipants(),
+                post.getJoinPolicy()
         );
     }
 
@@ -262,6 +328,11 @@ public class CommunityService implements
      * @return 참여 응답 뷰
      */
     private CommunityJoinView toJoinView(CommunityJoin join) {
-        return new CommunityJoinView(join.getId(), join.getPostId(), join.getUserId(), join.getStatus());
+        return new CommunityJoinView(
+                join.getId(),
+                join.getPostId(),
+                join.getUserId(),
+                join.getStatus()
+        );
     }
 }

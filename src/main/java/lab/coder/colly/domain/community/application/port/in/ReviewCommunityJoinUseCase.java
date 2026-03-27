@@ -18,10 +18,14 @@ public interface ReviewCommunityJoinUseCase {
     /**
      * 모임 참여 검토 명령.
      *
-     * @param joinId 참여 식별자
+     * @param joinId     참여 식별자
      * @param hostUserId 모임장 사용자 식별자
-     * @param status 변경할 참여 상태
+     * @param status     변경할 참여 상태
      */
-    record ReviewCommunityJoinCommand(Long joinId, Long hostUserId, JoinStatus status) {
+    record ReviewCommunityJoinCommand(
+            Long joinId,
+            Long hostUserId,
+            JoinStatus status
+    ) {
     }
 }

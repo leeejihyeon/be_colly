@@ -18,11 +18,16 @@ public interface GetRestrictionUseCase {
     /**
      * 제재 상태 뷰.
      *
-     * @param active 활성 제재 여부
+     * @param active  활성 제재 여부
      * @param startAt 제재 시작 시각
-     * @param endAt 제재 종료 시각
-     * @param reason 제재 사유
+     * @param endAt   제재 종료 시각
+     * @param reason  제재 사유
      */
-    record RestrictionView(boolean active, LocalDateTime startAt, LocalDateTime endAt, String reason) {
+    record RestrictionView(
+            boolean active,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            String reason
+    ) {
     }
 }
