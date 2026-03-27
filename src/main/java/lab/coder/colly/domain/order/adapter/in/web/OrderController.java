@@ -6,8 +6,9 @@ import lab.coder.colly.domain.order.adapter.in.web.dto.OrderResponse;
 import lab.coder.colly.domain.order.application.port.in.CreateOrderUseCase;
 import lab.coder.colly.domain.order.application.port.in.GetOrderUseCase;
 import lab.coder.colly.domain.order.application.port.in.OrderView;
+import lab.coder.colly.shared.api.ApiResponse;
+import lab.coder.colly.shared.api.ApiResponses;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +27,7 @@ public class OrderController {
      * @return 생성된 주문 응답
      */
     @PostMapping
-    public ResponseEntity<OrderResponse> create(
+    public ResponseEntity<ApiResponse<OrderResponse>> create(
             @Valid @RequestBody CreateOrderRequest request
     ) {
         OrderView view = createOrderUseCase.create(
@@ -35,7 +36,7 @@ public class OrderController {
                         request.amount()
                 )
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(view));
+        return ApiResponses.created(OrderResponse.from(view));
     }
 
     /**
@@ -45,7 +46,7 @@ public class OrderController {
      * @return 조회된 주문 응답
      */
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(OrderResponse.from(getOrderUseCase.getById(id)));
+    public ResponseEntity<ApiResponse<OrderResponse>> getById(@PathVariable Long id) {
+        return ApiResponses.ok(OrderResponse.from(getOrderUseCase.getById(id)));
     }
 }

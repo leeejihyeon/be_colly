@@ -19,22 +19,55 @@
   - 추후 토큰 인증으로 통합 예정
 
 ## 3. 공통 에러 응답 포맷
+## 3. 공통 성공 응답 포맷
 ```json
 {
-  "errorCode": "ERROR_CODE",
-  "message": "상세 메시지"
+  "success": true,
+  "code": "OK",
+  "message": "요청이 성공했습니다.",
+  "data": {},
+  "timestamp": "2026-03-27T14:30:00"
 }
 ```
 
-### 3.1 Validation 에러 포맷
+### 3.1 상태 코드별 성공 응답 코드
+| HTTP Status | code | message |
+|---|---|---|
+| 200 | OK | 요청이 성공했습니다. |
+| 201 | CREATED | 리소스가 생성되었습니다. |
+
+## 4. 공통 에러 응답 포맷
 ```json
 {
-  "errorCode": "VALIDATION_ERROR",
-  "message": "fieldName 에러메시지"
+  "success": false,
+  "code": "ERROR_CODE",
+  "message": "상세 메시지",
+  "path": "/api/example",
+  "details": {},
+  "timestamp": "2026-03-27T14:30:00"
 }
 ```
 
-## 4. 공통 에러 코드 매핑
+### 4.1 Validation 에러 포맷
+```json
+{
+  "success": false,
+  "code": "VALIDATION_ERROR",
+  "message": "email must be a well-formed email address",
+  "path": "/api/auth/magic-link/request",
+  "details": {
+    "fieldErrors": [
+      {
+        "field": "email",
+        "message": "must be a well-formed email address"
+      }
+    ]
+  },
+  "timestamp": "2026-03-27T14:30:00"
+}
+```
+
+## 5. 공통 에러 코드 매핑
 | HTTP Status | ErrorCode | 설명 |
 |---|---|---|
 | 400 | INVALID_AMOUNT | 금액 정책 위반 |
@@ -54,15 +87,17 @@
 | 409 | DUPLICATE_EMAIL | 중복 이메일 |
 | 409 | JOIN_ALREADY_EXISTS | 중복 참여 신청 |
 | 429 | MAGIC_LINK_RATE_LIMITED | 매직링크 재요청 과다 |
+| 500 | INTERNAL_SERVER_ERROR | 서버 내부 예기치 못한 오류 |
 
-## 5. 공통 작성 규칙 (도메인 문서용)
+## 6. 공통 작성 규칙 (도메인 문서용)
 - 각 도메인 문서에는 아래를 반드시 포함한다.
   - 엔드포인트 목록
   - Request Description (필드 타입/필수 여부/설명)
-  - Response Description (핵심 필드 의미)
+  - Response Description (공통 성공 응답의 `data` 기준 핵심 필드 의미)
   - Error Response 코드와 발생 조건
 - 구현 코드 변경 시 도메인 문서와 이 공통 문서를 함께 갱신한다.
 
-## 6. 이력
+## 7. 이력
 - v0.1: 공통 템플릿 생성
 - v0.2: auth/community 실제 구현 기준으로 공통 규칙 최신화
+- v0.3: 공통 성공/실패 응답 래퍼(`ApiResponse`, `ApiErrorResponse`) 규격 반영

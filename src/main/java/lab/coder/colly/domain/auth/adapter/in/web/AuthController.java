@@ -8,10 +8,11 @@ import lab.coder.colly.domain.auth.application.port.in.IssueMagicLinkUseCase;
 import lab.coder.colly.domain.auth.application.port.in.SocialLoginUseCase;
 import lab.coder.colly.domain.auth.application.port.in.VerifyMagicLinkUseCase;
 import lab.coder.colly.domain.auth.domain.model.AuthProvider;
+import lab.coder.colly.shared.api.ApiResponse;
+import lab.coder.colly.shared.api.ApiResponses;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,7 +35,7 @@ public class AuthController {
      * @return 발급 결과 응답
      */
     @PostMapping("/magic-link/request")
-    public ResponseEntity<IssueMagicLinkUseCase.MagicLinkIssueResult> issueMagicLink(
+    public ResponseEntity<ApiResponse<IssueMagicLinkUseCase.MagicLinkIssueResult>> issueMagicLink(
             @Valid @RequestBody RequestMagicLinkRequest request
     ) {
         IssueMagicLinkUseCase.MagicLinkIssueResult result =
@@ -42,7 +43,7 @@ public class AuthController {
                         new IssueMagicLinkUseCase.MagicLinkIssueCommand(request.email())
                 );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        return ApiResponses.created(result);
     }
 
     /**
@@ -52,7 +53,7 @@ public class AuthController {
      * @return 로그인 결과 응답
      */
     @PostMapping("/magic-link/verify")
-    public ResponseEntity<VerifyMagicLinkUseCase.LoginResult> verify(
+    public ResponseEntity<ApiResponse<VerifyMagicLinkUseCase.LoginResult>> verify(
             @Valid @RequestBody VerifyMagicLinkRequest request
     ) {
         VerifyMagicLinkUseCase.LoginResult result =
@@ -60,7 +61,7 @@ public class AuthController {
                         new VerifyMagicLinkUseCase.VerifyMagicLinkCommand(request.token())
                 );
 
-        return ResponseEntity.ok(result);
+        return ApiResponses.ok(result);
     }
 
     /**
@@ -70,7 +71,7 @@ public class AuthController {
      * @return 로그인 결과 응답
      */
     @PostMapping("/social/login")
-    public ResponseEntity<SocialLoginUseCase.SocialLoginResult> socialLogin(
+    public ResponseEntity<ApiResponse<SocialLoginUseCase.SocialLoginResult>> socialLogin(
             @Valid @RequestBody SocialLoginRequest request
     ) {
         AuthProvider provider = parseProvider(request.provider());
@@ -85,7 +86,7 @@ public class AuthController {
                         )
                 );
 
-        return ResponseEntity.ok(result);
+        return ApiResponses.ok(result);
     }
 
     /**

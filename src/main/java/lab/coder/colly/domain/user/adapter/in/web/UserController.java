@@ -6,8 +6,9 @@ import lab.coder.colly.domain.user.adapter.in.web.dto.UserResponse;
 import lab.coder.colly.domain.user.application.port.in.CreateUserUseCase;
 import lab.coder.colly.domain.user.application.port.in.GetUserUseCase;
 import lab.coder.colly.domain.user.application.port.in.UserView;
+import lab.coder.colly.shared.api.ApiResponse;
+import lab.coder.colly.shared.api.ApiResponses;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +27,7 @@ public class UserController {
      * @return 생성된 사용자 응답
      */
     @PostMapping
-    public ResponseEntity<UserResponse> create(
+    public ResponseEntity<ApiResponse<UserResponse>> create(
             @Valid @RequestBody CreateUserRequest request
     ) {
         UserView view = createUserUseCase.create(
@@ -36,7 +37,7 @@ public class UserController {
                 )
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(view));
+        return ApiResponses.created(UserResponse.from(view));
     }
 
     /**
@@ -46,7 +47,7 @@ public class UserController {
      * @return 조회된 사용자 응답
      */
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(UserResponse.from(getUserUseCase.getById(id)));
+    public ResponseEntity<ApiResponse<UserResponse>> getById(@PathVariable Long id) {
+        return ApiResponses.ok(UserResponse.from(getUserUseCase.getById(id)));
     }
 }

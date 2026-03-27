@@ -7,8 +7,9 @@ import lab.coder.colly.domain.community.adapter.in.web.dto.ReportRequest;
 import lab.coder.colly.domain.community.adapter.in.web.dto.ReviewJoinRequest;
 import lab.coder.colly.domain.community.application.port.in.*;
 import lab.coder.colly.domain.community.domain.model.PostType;
+import lab.coder.colly.shared.api.ApiResponse;
+import lab.coder.colly.shared.api.ApiResponses;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,7 @@ public class CommunityController {
      * @return 생성된 게시글 응답
      */
     @PostMapping("/posts")
-    public ResponseEntity<CommunityPostView> createPost(
+    public ResponseEntity<ApiResponse<CommunityPostView>> createPost(
             @Valid @RequestBody CreateCommunityPostRequest request
     ) {
         CommunityPostView created =
@@ -53,7 +54,7 @@ public class CommunityController {
                         )
                 );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ApiResponses.created(created);
     }
 
     /**
@@ -64,7 +65,7 @@ public class CommunityController {
      * @return 게시글 목록 응답
      */
     @GetMapping("/posts")
-    public ResponseEntity<List<CommunityPostView>> list(
+    public ResponseEntity<ApiResponse<List<CommunityPostView>>> list(
             @RequestParam String cityCode,
             @RequestParam(defaultValue = "ALL") String type
     ) {
@@ -78,7 +79,7 @@ public class CommunityController {
                         new ListCommunityPostsUseCase.ListCommunityPostsQuery(cityCode, postType)
                 );
 
-        return ResponseEntity.ok(result);
+        return ApiResponses.ok(result);
     }
 
     /**
@@ -89,7 +90,7 @@ public class CommunityController {
      * @return 참여 결과 응답
      */
     @PostMapping("/posts/{postId}/join")
-    public ResponseEntity<CommunityJoinView> join(
+    public ResponseEntity<ApiResponse<CommunityJoinView>> join(
             @PathVariable Long postId,
             @Valid @RequestBody JoinRequest request
     ) {
@@ -98,7 +99,7 @@ public class CommunityController {
                         new JoinCommunityUseCase.JoinCommunityCommand(postId, request.userId())
                 );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(join);
+        return ApiResponses.created(join);
     }
 
     /**
@@ -109,7 +110,7 @@ public class CommunityController {
      * @return 변경된 참여 상태 응답
      */
     @PatchMapping("/joins/{joinId}")
-    public ResponseEntity<CommunityJoinView> review(
+    public ResponseEntity<ApiResponse<CommunityJoinView>> review(
             @PathVariable Long joinId,
             @Valid @RequestBody ReviewJoinRequest request
     ) {
@@ -122,7 +123,7 @@ public class CommunityController {
                         )
                 );
 
-        return ResponseEntity.ok(reviewed);
+        return ApiResponses.ok(reviewed);
     }
 
     /**
@@ -132,7 +133,7 @@ public class CommunityController {
      * @return 신고 처리 결과 응답
      */
     @PostMapping("/reports")
-    public ResponseEntity<ReportUserUseCase.ReportResult> report(
+    public ResponseEntity<ApiResponse<ReportUserUseCase.ReportResult>> report(
             @Valid @RequestBody ReportRequest request
     ) {
         ReportUserUseCase.ReportResult result =
@@ -144,7 +145,7 @@ public class CommunityController {
                         )
                 );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        return ApiResponses.created(result);
     }
 
     /**
@@ -154,9 +155,9 @@ public class CommunityController {
      * @return 제재 상태 응답
      */
     @GetMapping("/restrictions/{userId}")
-    public ResponseEntity<GetRestrictionUseCase.RestrictionView> getRestriction(
+    public ResponseEntity<ApiResponse<GetRestrictionUseCase.RestrictionView>> getRestriction(
             @PathVariable Long userId
     ) {
-        return ResponseEntity.ok(getRestrictionUseCase.getActiveRestriction(userId));
+        return ApiResponses.ok(getRestrictionUseCase.getActiveRestriction(userId));
     }
 }

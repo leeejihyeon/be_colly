@@ -15,6 +15,9 @@
 ## 3. 공통 규칙
 - Base Path: `/api/community`
 - 인증 방식: 현재 API 파라미터로 사용자 ID를 전달(추후 토큰 인증 연동 예정)
+- 응답 포맷:
+  - 성공 응답은 `ApiResponse<T>` 래퍼를 사용한다.
+  - 아래 `Response Body` 예시는 `ApiResponse.data` 내부 payload 기준으로 작성한다.
 - 게시글 타입:
   - `GATHERING`: 모임 모집형
   - `FREE_FEED`: 자유형 게시글

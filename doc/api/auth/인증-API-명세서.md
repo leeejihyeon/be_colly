@@ -15,6 +15,9 @@
 ## 3. 공통 규칙
 - Base Path: `/api/auth`
 - 인증 방식: 로그인 전 API
+- 응답 포맷:
+  - 성공 응답은 `ApiResponse<T>` 래퍼를 사용한다.
+  - 아래 `Response Body` 예시는 `ApiResponse.data` 내부 payload 기준으로 작성한다.
 - 공통 에러 코드:
   - `AUTH_INVALID_EMAIL`
   - `AUTH_INVALID_PROVIDER`
