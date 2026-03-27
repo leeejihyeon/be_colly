@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS auth_magic_link (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(320) NOT NULL,
+  token_hash VARCHAR(64) NOT NULL UNIQUE,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);

@@ -1,0 +1,149 @@
+package lab.coder.colly.domain.community.adapter.in.web;
+
+import jakarta.validation.Valid;
+import java.util.List;
+import lab.coder.colly.domain.community.adapter.in.web.dto.CreateCommunityPostRequest;
+import lab.coder.colly.domain.community.adapter.in.web.dto.JoinRequest;
+import lab.coder.colly.domain.community.adapter.in.web.dto.ReportRequest;
+import lab.coder.colly.domain.community.adapter.in.web.dto.ReviewJoinRequest;
+import lab.coder.colly.domain.community.application.port.in.CommunityJoinView;
+import lab.coder.colly.domain.community.application.port.in.CommunityPostView;
+import lab.coder.colly.domain.community.application.port.in.CreateCommunityPostUseCase;
+import lab.coder.colly.domain.community.application.port.in.GetRestrictionUseCase;
+import lab.coder.colly.domain.community.application.port.in.JoinCommunityUseCase;
+import lab.coder.colly.domain.community.application.port.in.ListCommunityPostsUseCase;
+import lab.coder.colly.domain.community.application.port.in.ReportUserUseCase;
+import lab.coder.colly.domain.community.application.port.in.ReviewCommunityJoinUseCase;
+import lab.coder.colly.domain.community.domain.model.PostType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/community")
+public class CommunityController {
+
+    private final CreateCommunityPostUseCase createCommunityPostUseCase;
+    private final ListCommunityPostsUseCase listCommunityPostsUseCase;
+    private final JoinCommunityUseCase joinCommunityUseCase;
+    private final ReviewCommunityJoinUseCase reviewCommunityJoinUseCase;
+    private final ReportUserUseCase reportUserUseCase;
+    private final GetRestrictionUseCase getRestrictionUseCase;
+
+    public CommunityController(
+        CreateCommunityPostUseCase createCommunityPostUseCase,
+        ListCommunityPostsUseCase listCommunityPostsUseCase,
+        JoinCommunityUseCase joinCommunityUseCase,
+        ReviewCommunityJoinUseCase reviewCommunityJoinUseCase,
+        ReportUserUseCase reportUserUseCase,
+        GetRestrictionUseCase getRestrictionUseCase
+    ) {
+        this.createCommunityPostUseCase = createCommunityPostUseCase;
+        this.listCommunityPostsUseCase = listCommunityPostsUseCase;
+        this.joinCommunityUseCase = joinCommunityUseCase;
+        this.reviewCommunityJoinUseCase = reviewCommunityJoinUseCase;
+        this.reportUserUseCase = reportUserUseCase;
+        this.getRestrictionUseCase = getRestrictionUseCase;
+    }
+
+    /**
+     * 커뮤니티 게시글을 생성한다.
+     *
+     * @param request 게시글 생성 요청 바디
+     * @return 생성된 게시글 응답
+     */
+    @PostMapping("/posts")
+    public ResponseEntity<CommunityPostView> createPost(@Valid @RequestBody CreateCommunityPostRequest request) {
+        CommunityPostView created = createCommunityPostUseCase.createPost(new CreateCommunityPostUseCase.CreateCommunityPostCommand(
+            request.authorUserId(),
+            request.cityCode(),
+            request.type(),
+            request.content(),
+            request.imageUrl(),
+            request.locationName(),
+            request.destination(),
+            request.meetingPlace(),
+            request.meetingAt(),
+            request.maxParticipants(),
+            request.joinPolicy()
+        ));
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    /**
+     * 도시 코드와 게시글 타입 필터로 피드를 조회한다.
+     *
+     * @param cityCode 도시 코드
+     * @param type 게시글 타입 필터(ALL/GATHERING/FREE_FEED)
+     * @return 게시글 목록 응답
+     */
+    @GetMapping("/posts")
+    public ResponseEntity<List<CommunityPostView>> list(
+        @RequestParam String cityCode,
+        @RequestParam(defaultValue = "ALL") String type
+    ) {
+        PostType postType = "ALL".equalsIgnoreCase(type) ? null : PostType.valueOf(type.toUpperCase());
+        List<CommunityPostView> result = listCommunityPostsUseCase.list(new ListCommunityPostsUseCase.ListCommunityPostsQuery(cityCode, postType));
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 모임글에 참여하거나 승인 대기 상태로 신청한다.
+     *
+     * @param postId 게시글 식별자
+     * @param request 참여 요청 바디
+     * @return 참여 결과 응답
+     */
+    @PostMapping("/posts/{postId}/join")
+    public ResponseEntity<CommunityJoinView> join(@PathVariable Long postId, @Valid @RequestBody JoinRequest request) {
+        CommunityJoinView join = joinCommunityUseCase.join(new JoinCommunityUseCase.JoinCommunityCommand(postId, request.userId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(join);
+    }
+
+    /**
+     * 모임 참여 요청을 승인 또는 거절한다.
+     *
+     * @param joinId 참여 요청 식별자
+     * @param request 검토 요청 바디
+     * @return 변경된 참여 상태 응답
+     */
+    @PatchMapping("/joins/{joinId}")
+    public ResponseEntity<CommunityJoinView> review(@PathVariable Long joinId, @Valid @RequestBody ReviewJoinRequest request) {
+        CommunityJoinView reviewed = reviewCommunityJoinUseCase.review(
+            new ReviewCommunityJoinUseCase.ReviewCommunityJoinCommand(joinId, request.hostUserId(), request.status())
+        );
+        return ResponseEntity.ok(reviewed);
+    }
+
+    /**
+     * 사용자 신고를 등록한다.
+     *
+     * @param request 신고 요청 바디
+     * @return 신고 처리 결과 응답
+     */
+    @PostMapping("/reports")
+    public ResponseEntity<ReportUserUseCase.ReportResult> report(@Valid @RequestBody ReportRequest request) {
+        ReportUserUseCase.ReportResult result = reportUserUseCase.report(
+            new ReportUserUseCase.ReportCommand(request.reporterUserId(), request.targetUserId(), request.reason())
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    /**
+     * 사용자의 현재 제재 상태를 조회한다.
+     *
+     * @param userId 사용자 식별자
+     * @return 제재 상태 응답
+     */
+    @GetMapping("/restrictions/{userId}")
+    public ResponseEntity<GetRestrictionUseCase.RestrictionView> getRestriction(@PathVariable Long userId) {
+        return ResponseEntity.ok(getRestrictionUseCase.getActiveRestriction(userId));
+    }
+}
