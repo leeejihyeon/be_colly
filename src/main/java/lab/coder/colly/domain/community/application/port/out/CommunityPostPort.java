@@ -29,9 +29,10 @@ public interface CommunityPostPort {
     /**
      * 도시/타입 조건으로 커뮤니티 게시글 목록을 조회한다.
      *
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type 게시글 타입(전체 조회 시 null)
      * @return 커뮤니티 게시글 목록
      */
-    List<CommunityPost> findByCityCodeAndType(String cityCode, PostType type);
+    List<CommunityPost> findByCountryCodeAndCityCodeAndType(String countryCode, String cityCode, PostType type);
 }

@@ -41,6 +41,7 @@ public class CommunityController {
                 createCommunityPostUseCase.createPost(
                         new CreateCommunityPostUseCase.CreateCommunityPostCommand(
                                 request.authorUserId(),
+                                request.countryCode(),
                                 request.cityCode(),
                                 request.type(),
                                 request.content(),
@@ -60,12 +61,14 @@ public class CommunityController {
     /**
      * 도시 코드와 게시글 타입 필터로 피드를 조회한다.
      *
-     * @param cityCode 도시 코드
-     * @param type     게시글 타입 필터(ALL/GATHERING/FREE_FEED)
+     * @param countryCode 국가 코드
+     * @param cityCode    도시 코드
+     * @param type        게시글 타입 필터(ALL/GATHERING/FREE_FEED)
      * @return 게시글 목록 응답
      */
     @GetMapping("/posts")
     public ResponseEntity<ApiResponse<List<CommunityPostView>>> list(
+            @RequestParam String countryCode,
             @RequestParam String cityCode,
             @RequestParam(defaultValue = "ALL") String type
     ) {
@@ -76,7 +79,7 @@ public class CommunityController {
 
         List<CommunityPostView> result =
                 listCommunityPostsUseCase.list(
-                        new ListCommunityPostsUseCase.ListCommunityPostsQuery(cityCode, postType)
+                        new ListCommunityPostsUseCase.ListCommunityPostsQuery(countryCode, cityCode, postType)
                 );
 
         return ApiResponses.ok(result);

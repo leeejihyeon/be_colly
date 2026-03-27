@@ -42,6 +42,7 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
                         new CommunityPostEntity(
                                 post.getId(),
                                 post.getAuthorUserId(),
+                                post.getCountryCode(),
                                 post.getCityCode(),
                                 post.getType(),
                                 post.getContent(),
@@ -70,20 +71,22 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
     }
 
     /**
-     * 도시/타입 조건으로 게시글 목록을 조회한다.
+     * 국가/도시/타입 조건으로 게시글 목록을 조회한다.
      *
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type     게시글 타입(ALL일 경우 null)
      * @return 게시글 목록
      */
     @Override
-    public List<CommunityPost> findByCityCodeAndType(
+    public List<CommunityPost> findByCountryCodeAndCityCodeAndType(
+            String countryCode,
             String cityCode,
             PostType type
     ) {
         List<CommunityPostEntity> entities = (type == null)
-                ? communityPostJpaRepository.findByCityCodeOrderByIdDesc(cityCode)
-                : communityPostJpaRepository.findByCityCodeAndTypeOrderByIdDesc(cityCode, type);
+                ? communityPostJpaRepository.findByCountryCodeAndCityCodeOrderByIdDesc(countryCode, cityCode)
+                : communityPostJpaRepository.findByCountryCodeAndCityCodeAndTypeOrderByIdDesc(countryCode, cityCode, type);
 
         return entities.stream()
                 .map(this::toDomain)
@@ -240,6 +243,7 @@ public class CommunityPersistenceAdapter implements CommunityPostPort, Community
         return CommunityPost.restore(
                 entity.getId(),
                 entity.getAuthorUserId(),
+                entity.getCountryCode(),
                 entity.getCityCode(),
                 entity.getType(),
                 entity.getContent(),

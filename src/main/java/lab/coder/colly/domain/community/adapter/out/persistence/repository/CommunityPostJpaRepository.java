@@ -12,21 +12,24 @@ import java.util.List;
 public interface CommunityPostJpaRepository extends JpaRepository<CommunityPostEntity, Long> {
 
     /**
-     * 도시 코드 기준으로 게시글을 최신순 조회한다.
+     * 국가 코드/도시 코드 기준으로 게시글을 최신순 조회한다.
      *
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @return 게시글 엔티티 목록
      */
-    List<CommunityPostEntity> findByCityCodeOrderByIdDesc(String cityCode);
+    List<CommunityPostEntity> findByCountryCodeAndCityCodeOrderByIdDesc(String countryCode, String cityCode);
 
     /**
-     * 도시 코드와 게시글 타입 기준으로 게시글을 최신순 조회한다.
+     * 국가 코드/도시 코드/게시글 타입 기준으로 게시글을 최신순 조회한다.
      *
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type     게시글 타입
      * @return 게시글 엔티티 목록
      */
-    List<CommunityPostEntity> findByCityCodeAndTypeOrderByIdDesc(
+    List<CommunityPostEntity> findByCountryCodeAndCityCodeAndTypeOrderByIdDesc(
+            String countryCode,
             String cityCode,
             PostType type
     );

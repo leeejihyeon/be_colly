@@ -14,6 +14,7 @@ public class CommunityPost {
 
     private final Long id;
     private final Long authorUserId;
+    private final String countryCode;
     private final String cityCode;
     private final PostType type;
     private final String content;
@@ -29,6 +30,7 @@ public class CommunityPost {
      * 신규 커뮤니티 게시글 도메인 객체를 생성한다.
      *
      * @param authorUserId 작성자 사용자 ID
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type 게시글 타입
      * @param content 게시글 본문
@@ -43,6 +45,7 @@ public class CommunityPost {
      */
     public static CommunityPost create(
         Long authorUserId,
+        String countryCode,
         String cityCode,
         PostType type,
         String content,
@@ -57,6 +60,7 @@ public class CommunityPost {
         return new CommunityPost(
             null,
             authorUserId,
+            countryCode,
             cityCode,
             type,
             content,
@@ -75,6 +79,7 @@ public class CommunityPost {
      *
      * @param id 게시글 ID
      * @param authorUserId 작성자 사용자 ID
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type 게시글 타입
      * @param content 게시글 본문
@@ -90,6 +95,7 @@ public class CommunityPost {
     public static CommunityPost restore(
         Long id,
         Long authorUserId,
+        String countryCode,
         String cityCode,
         PostType type,
         String content,
@@ -104,6 +110,7 @@ public class CommunityPost {
         return new CommunityPost(
             id,
             authorUserId,
+            countryCode,
             cityCode,
             type,
             content,

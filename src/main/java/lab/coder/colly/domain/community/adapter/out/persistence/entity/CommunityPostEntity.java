@@ -29,6 +29,9 @@ public class CommunityPostEntity extends BaseEntity {
     @Column(nullable = false)
     private Long authorUserId;
 
+    @Column(nullable = false, length = 2)
+    private String countryCode;
+
     @Column(nullable = false, length = 50)
     private String cityCode;
 
@@ -64,6 +67,7 @@ public class CommunityPostEntity extends BaseEntity {
      *
      * @param id 엔티티 식별자
      * @param authorUserId 작성자 사용자 ID
+     * @param countryCode 국가 코드
      * @param cityCode 게시글 대상 도시 코드
      * @param type 게시글 타입
      * @param content 본문
@@ -78,6 +82,7 @@ public class CommunityPostEntity extends BaseEntity {
     public CommunityPostEntity(
             Long id,
             Long authorUserId,
+            String countryCode,
             String cityCode,
             PostType type,
             String content,
@@ -91,6 +96,7 @@ public class CommunityPostEntity extends BaseEntity {
     ) {
         this.id = id;
         this.authorUserId = authorUserId;
+        this.countryCode = countryCode;
         this.cityCode = cityCode;
         this.type = type;
         this.content = content;

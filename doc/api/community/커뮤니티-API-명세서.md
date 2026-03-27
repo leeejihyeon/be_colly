@@ -2,11 +2,11 @@
 
 ## 1. 문서 정보
 - 도메인: community
-- 작성일: 2026-03-26
+- 작성일: 2026-03-27
 - 작성자: Codex
 
 ## 2. 도메인 개요
-- 목적: 도시 기반 커뮤니티 게시글, 모임 참여, 신고/제재 관리
+- 목적: 국가/도시 기반 커뮤니티 게시글, 모임 참여, 신고/제재 관리
 - 주요 기능:
   - 게시글 생성/조회 (`GATHERING`, `FREE_FEED`)
   - 모임 참여 및 참여 승인/거절
@@ -29,7 +29,7 @@
 | 구분 | Method | Path | 설명 |
 |---|---|---|---|
 | 게시글 | POST | `/posts` | 게시글 생성 |
-| 게시글 | GET | `/posts` | 도시+타입 기준 피드 조회 |
+| 게시글 | GET | `/posts` | 국가+도시+타입 기준 피드 조회 |
 | 모임 | POST | `/posts/{postId}/join` | 모임 참여/신청 |
 | 모임 | PATCH | `/joins/{joinId}` | 모임 참여 승인/거절 |
 | 신고 | POST | `/reports` | 사용자 신고 등록 |
@@ -45,6 +45,7 @@
 ```json
 {
   "authorUserId": 1,
+  "countryCode": "AU",
   "cityCode": "SYD",
   "type": "GATHERING",
   "content": "블루마운틴 같이 가실 분",
@@ -62,6 +63,7 @@
 | Field | Type | Required | Description |
 |---|---|---|---|
 | authorUserId | Number | Y | 작성자 사용자 ID |
+| countryCode | String | Y | 국가 코드(초기 `AU`) |
 | cityCode | String | Y | 도시 코드(초기 `SYD`) |
 | type | Enum | Y | `GATHERING` 또는 `FREE_FEED` |
 | content | String | Y | 게시글 본문 |
@@ -78,6 +80,7 @@
 {
   "id": 10,
   "authorUserId": 1,
+  "countryCode": "AU",
   "cityCode": "SYD",
   "type": "GATHERING",
   "content": "블루마운틴 같이 가실 분",
@@ -99,12 +102,13 @@
 
 ### 5.2 게시글 조회
 - Method: `GET`
-- Path: `/api/community/posts?cityCode=SYD&type=ALL|GATHERING|FREE_FEED`
-- 설명: 도시별 피드를 타입 필터로 조회한다.
+- Path: `/api/community/posts?countryCode=AU&cityCode=SYD&type=ALL|GATHERING|FREE_FEED`
+- 설명: 국가/도시별 피드를 타입 필터로 조회한다.
 
 #### Query Parameter
 | Name | Type | Required | Description | Example |
 |---|---|---|---|---|
+| countryCode | String | Y | 국가 코드 | `AU` |
 | cityCode | String | Y | 도시 코드 | `SYD` |
 | type | String | N | 필터 타입(기본 `ALL`) | `FREE_FEED` |
 
@@ -114,6 +118,7 @@
   {
     "id": 10,
     "authorUserId": 1,
+    "countryCode": "AU",
     "cityCode": "SYD",
     "type": "FREE_FEED",
     "content": "오페라하우스 뷰 최고",
@@ -232,4 +237,5 @@
 - 신고 3회 이상 누적 시 `7일` 커뮤니티 활동 제한을 부여한다.
 
 ## 7. 이력
+- v0.2: 국가 코드(`countryCode`) 기반 조회/응답 필드 추가
 - v0.1: 게시글/참여/신고/제재 API 최초 작성

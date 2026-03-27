@@ -3,6 +3,7 @@ package lab.coder.colly.domain.community.adapter.in.web.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lab.coder.colly.domain.community.domain.model.JoinPolicy;
 import lab.coder.colly.domain.community.domain.model.PostType;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
  * 게시글 생성 요청 DTO.
  *
  * @param authorUserId    작성자 사용자 ID
+ * @param countryCode     국가 코드
  * @param cityCode        도시 코드
  * @param type            게시글 타입
  * @param content         게시글 본문
@@ -26,6 +28,10 @@ import java.time.LocalDateTime;
 public record CreateCommunityPostRequest(
         @NotNull
         Long authorUserId,
+
+        @NotBlank
+        @Size(min = 2, max = 2)
+        String countryCode,
 
         @NotBlank
         String cityCode,

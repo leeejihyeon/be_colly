@@ -9,6 +9,7 @@ import lab.coder.colly.domain.community.domain.model.PostType;
  *
  * @param id 게시글 식별자
  * @param authorUserId 작성자 사용자 식별자
+ * @param countryCode 국가 코드
  * @param cityCode 도시 코드
  * @param type 게시글 타입
  * @param content 게시글 본문
@@ -23,6 +24,7 @@ import lab.coder.colly.domain.community.domain.model.PostType;
 public record CommunityPostView(
     Long id,
     Long authorUserId,
+    String countryCode,
     String cityCode,
     PostType type,
     String content,

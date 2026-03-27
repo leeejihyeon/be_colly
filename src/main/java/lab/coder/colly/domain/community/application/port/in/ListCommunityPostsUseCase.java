@@ -19,9 +19,10 @@ public interface ListCommunityPostsUseCase {
     /**
      * 게시글 조회 조건.
      *
+     * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type 게시글 타입(ALL 조회 시 null)
      */
-    record ListCommunityPostsQuery(String cityCode, PostType type) {
+    record ListCommunityPostsQuery(String countryCode, String cityCode, PostType type) {
     }
 }

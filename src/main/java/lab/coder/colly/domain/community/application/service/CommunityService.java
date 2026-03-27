@@ -54,6 +54,7 @@ public class CommunityService implements
                 communityPostPort.save(
                         CommunityPost.create(
                                 command.authorUserId(),
+                                command.countryCode(),
                                 command.cityCode(),
                                 command.type(),
                                 command.content(),
@@ -71,7 +72,7 @@ public class CommunityService implements
     }
 
     /**
-     * 도시/타입 조건으로 게시글 피드를 조회한다.
+     * 국가/도시/타입 조건으로 게시글 피드를 조회한다.
      *
      * @param query 게시글 조회 조건
      * @return 게시글 목록
@@ -80,7 +81,12 @@ public class CommunityService implements
     public List<CommunityPostView> list(ListCommunityPostsQuery query) {
 
         PostType type = query.type();
-        List<CommunityPost> posts = communityPostPort.findByCityCodeAndType(query.cityCode(), type);
+        List<CommunityPost> posts =
+                communityPostPort.findByCountryCodeAndCityCodeAndType(
+                        query.countryCode(),
+                        query.cityCode(),
+                        type
+                );
 
         return posts.stream()
                 .map(this::toPostView)
@@ -308,6 +314,7 @@ public class CommunityService implements
         return new CommunityPostView(
                 post.getId(),
                 post.getAuthorUserId(),
+                post.getCountryCode(),
                 post.getCityCode(),
                 post.getType(),
                 post.getContent(),
