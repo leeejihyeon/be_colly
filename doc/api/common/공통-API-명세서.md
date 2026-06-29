@@ -76,6 +76,8 @@
 | 400 | AUTH_INVALID_EMAIL | 이메일 형식 오류 |
 | 400 | MAGIC_LINK_EXPIRED | 만료된 매직링크 |
 | 400 | MAGIC_LINK_ALREADY_USED | 이미 사용된 매직링크 |
+| 401 | REFRESH_TOKEN_NOT_FOUND | 리프레시 토큰 없음 |
+| 401 | REFRESH_TOKEN_EXPIRED | 리프레시 토큰 만료 |
 | 400 | VALIDATION_ERROR | Bean Validation 실패 |
 | 403 | USER_RESTRICTED | 제재 사용자의 제한된 동작 |
 | 403 | FORBIDDEN_ACTION | 권한 없는 사용자 동작 |
@@ -87,6 +89,7 @@
 | 409 | DUPLICATE_EMAIL | 중복 이메일 |
 | 409 | JOIN_ALREADY_EXISTS | 중복 참여 신청 |
 | 429 | MAGIC_LINK_RATE_LIMITED | 매직링크 재요청 과다 |
+| 503 | MAGIC_LINK_EMAIL_SEND_FAILED | SMTP/메일 발송 실패 |
 | 500 | INTERNAL_SERVER_ERROR | 서버 내부 예기치 못한 오류 |
 
 ## 6. 공통 작성 규칙 (도메인 문서용)

@@ -1,6 +1,8 @@
 package lab.coder.colly.domain.community.application.port.in;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lab.coder.colly.domain.community.domain.model.GatheringAudienceScope;
 import lab.coder.colly.domain.community.domain.model.JoinPolicy;
 import lab.coder.colly.domain.community.domain.model.PostType;
 
@@ -12,6 +14,10 @@ import lab.coder.colly.domain.community.domain.model.PostType;
  * @param countryCode 국가 코드
  * @param cityCode 도시 코드
  * @param type 게시글 타입
+ * @param audienceScope 모임글 대상 범위(숙소/도시)
+ * @param accommodationId 숙소 식별자
+ * @param audienceStayStartDate 대상 숙박 시작일
+ * @param audienceStayEndDate 대상 숙박 종료일
  * @param content 게시글 본문
  * @param imageUrl 이미지 URL
  * @param locationName 자유형글 위치명
@@ -27,6 +33,10 @@ public record CommunityPostView(
     String countryCode,
     String cityCode,
     PostType type,
+    GatheringAudienceScope audienceScope,
+    Long accommodationId,
+    LocalDate audienceStayStartDate,
+    LocalDate audienceStayEndDate,
     String content,
     String imageUrl,
     String locationName,

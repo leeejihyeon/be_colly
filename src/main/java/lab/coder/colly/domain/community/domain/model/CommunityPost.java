@@ -1,5 +1,6 @@
 package lab.coder.colly.domain.community.domain.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,10 @@ public class CommunityPost {
     private final String countryCode;
     private final String cityCode;
     private final PostType type;
+    private final GatheringAudienceScope audienceScope;
+    private final Long accommodationId;
+    private final LocalDate audienceStayStartDate;
+    private final LocalDate audienceStayEndDate;
     private final String content;
     private final String imageUrl;
     private final String locationName;
@@ -33,6 +38,10 @@ public class CommunityPost {
      * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type 게시글 타입
+     * @param audienceScope 모임글 대상 범위(숙소/도시)
+     * @param accommodationId 숙소 식별자
+     * @param audienceStayStartDate 대상 숙박 시작일
+     * @param audienceStayEndDate 대상 숙박 종료일
      * @param content 게시글 본문
      * @param imageUrl 게시글 이미지 URL
      * @param locationName 위치명
@@ -48,6 +57,10 @@ public class CommunityPost {
         String countryCode,
         String cityCode,
         PostType type,
+        GatheringAudienceScope audienceScope,
+        Long accommodationId,
+        LocalDate audienceStayStartDate,
+        LocalDate audienceStayEndDate,
         String content,
         String imageUrl,
         String locationName,
@@ -63,6 +76,10 @@ public class CommunityPost {
             countryCode,
             cityCode,
             type,
+            audienceScope,
+            accommodationId,
+            audienceStayStartDate,
+            audienceStayEndDate,
             content,
             imageUrl,
             locationName,
@@ -82,6 +99,10 @@ public class CommunityPost {
      * @param countryCode 국가 코드
      * @param cityCode 도시 코드
      * @param type 게시글 타입
+     * @param audienceScope 모임글 대상 범위(숙소/도시)
+     * @param accommodationId 숙소 식별자
+     * @param audienceStayStartDate 대상 숙박 시작일
+     * @param audienceStayEndDate 대상 숙박 종료일
      * @param content 게시글 본문
      * @param imageUrl 게시글 이미지 URL
      * @param locationName 위치명
@@ -98,6 +119,10 @@ public class CommunityPost {
         String countryCode,
         String cityCode,
         PostType type,
+        GatheringAudienceScope audienceScope,
+        Long accommodationId,
+        LocalDate audienceStayStartDate,
+        LocalDate audienceStayEndDate,
         String content,
         String imageUrl,
         String locationName,
@@ -113,6 +138,10 @@ public class CommunityPost {
             countryCode,
             cityCode,
             type,
+            audienceScope,
+            accommodationId,
+            audienceStayStartDate,
+            audienceStayEndDate,
             content,
             imageUrl,
             locationName,

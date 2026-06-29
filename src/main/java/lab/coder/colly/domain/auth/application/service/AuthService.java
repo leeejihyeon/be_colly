@@ -3,7 +3,10 @@ package lab.coder.colly.domain.auth.application.service;
 import lab.coder.colly.domain.auth.application.port.in.IssueMagicLinkUseCase;
 import lab.coder.colly.domain.auth.application.port.in.SocialLoginUseCase;
 import lab.coder.colly.domain.auth.application.port.in.VerifyMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.in.RefreshTokenUseCase;
+import lab.coder.colly.domain.auth.application.port.in.SignOutUseCase;
 import lab.coder.colly.domain.auth.application.port.out.AuthIdentityPort;
+import lab.coder.colly.domain.auth.application.port.out.AuthMagicLinkMailPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthMagicLinkPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthSessionPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthUserPort;
@@ -25,12 +28,18 @@ import java.time.LocalDateTime;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class AuthService implements IssueMagicLinkUseCase, VerifyMagicLinkUseCase, SocialLoginUseCase {
+public class AuthService implements
+        IssueMagicLinkUseCase,
+        VerifyMagicLinkUseCase,
+        SocialLoginUseCase,
+        RefreshTokenUseCase,
+        SignOutUseCase {
 
     private static final long MAGIC_LINK_EXPIRE_SECONDS = 15 * 60;
     private static final long MAGIC_LINK_COOLDOWN_SECONDS = 60;
 
     private final AuthMagicLinkPort authMagicLinkPort;
+    private final AuthMagicLinkMailPort authMagicLinkMailPort;
     private final AuthUserPort authUserPort;
     private final AuthSessionPort authSessionPort;
     private final AuthIdentityPort authIdentityPort;
@@ -72,10 +81,11 @@ public class AuthService implements IssueMagicLinkUseCase, VerifyMagicLinkUseCas
                         )
                 );
 
+        authMagicLinkMailPort.sendMagicLink(magicLink.getEmail(), rawToken, MAGIC_LINK_EXPIRE_SECONDS);
+
         return new MagicLinkIssueResult(
                 magicLink.getEmail(),
-                MAGIC_LINK_EXPIRE_SECONDS,
-                rawToken
+                MAGIC_LINK_EXPIRE_SECONDS
         );
     }
 
@@ -131,6 +141,68 @@ public class AuthService implements IssueMagicLinkUseCase, VerifyMagicLinkUseCas
                 );
 
         return issueLoginResult(user);
+    }
+
+    /**
+     * 리프레시 토큰으로 새 로그인 세션을 발급한다.
+     *
+     * @param command 리프레시 토큰 갱신 요청
+     * @return 갱신된 로그인 결과
+     */
+    @Override
+    @Transactional
+    public RefreshTokenUseCase.LoginResult refresh(RefreshTokenUseCase.RefreshTokenCommand command) {
+
+        if (command.refreshToken() == null || command.refreshToken().isBlank()) {
+            throw new DomainException(
+                    ErrorCode.REFRESH_TOKEN_NOT_FOUND,
+                    "Refresh token is required"
+            );
+        }
+
+        String tokenHash = HashSupport.sha256(command.refreshToken());
+        AuthSession session = authSessionPort.findByRefreshTokenHash(tokenHash)
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.REFRESH_TOKEN_NOT_FOUND,
+                                "Refresh token not found"
+                        )
+                );
+
+        if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
+            authSessionPort.deleteByRefreshTokenHash(tokenHash);
+            throw new DomainException(
+                    ErrorCode.REFRESH_TOKEN_EXPIRED,
+                    "Refresh token has expired"
+            );
+        }
+
+        AuthUser user = authUserPort.findById(session.getUserId())
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.USER_NOT_FOUND,
+                                "User not found"
+                        )
+                );
+
+        return issueLoginResultForRefresh(session, user);
+    }
+
+    /**
+     * 리프레시 토큰을 기준으로 로그아웃 처리한다.
+     *
+     * @param command 로그아웃 요청
+     */
+    @Override
+    @Transactional
+    public void signOut(SignOutUseCase.SignOutCommand command) {
+
+        if (command.refreshToken() == null || command.refreshToken().isBlank()) {
+            return;
+        }
+
+        String tokenHash = HashSupport.sha256(command.refreshToken());
+        authSessionPort.deleteByRefreshTokenHash(tokenHash);
     }
 
     /**
@@ -233,6 +305,9 @@ public class AuthService implements IssueMagicLinkUseCase, VerifyMagicLinkUseCas
      */
     private LoginResult issueLoginResult(AuthUser user) {
 
+        authSessionPort.deleteExpiredSessions();
+        authSessionPort.deleteByUserId(user.getId());
+
         String accessToken = AuthTokenGenerator.randomToken(32);
         String refreshToken = AuthTokenGenerator.randomToken(32);
 
@@ -245,6 +320,40 @@ public class AuthService implements IssueMagicLinkUseCase, VerifyMagicLinkUseCas
         );
 
         return new LoginResult(
+                user.getId(),
+                user.getEmail(),
+                accessToken,
+                refreshToken
+        );
+    }
+
+    /**
+     * 리프레시 토큰 기반 갱신용 토큰 발급.
+     *
+     * @param existingSession 기존 세션
+     * @param user           사용자
+     * @return 갱신된 로그인 결과
+     */
+    private RefreshTokenUseCase.LoginResult issueLoginResultForRefresh(
+            AuthSession existingSession,
+            AuthUser user
+    ) {
+        String oldRefreshHash = existingSession.getRefreshTokenHash();
+
+        authSessionPort.deleteByRefreshTokenHash(oldRefreshHash);
+
+        String accessToken = AuthTokenGenerator.randomToken(32);
+        String refreshToken = AuthTokenGenerator.randomToken(32);
+
+        authSessionPort.save(
+                AuthSession.create(
+                        user.getId(),
+                        HashSupport.sha256(refreshToken),
+                        LocalDateTime.now().plusDays(14)
+                )
+        );
+
+        return new RefreshTokenUseCase.LoginResult(
                 user.getId(),
                 user.getEmail(),
                 accessToken,

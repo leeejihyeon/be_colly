@@ -1,6 +1,7 @@
 package lab.coder.colly.domain.community.domain.policy;
 
 import lab.coder.colly.domain.community.application.port.in.CreateCommunityPostUseCase;
+import lab.coder.colly.domain.community.domain.model.GatheringAudienceScope;
 import lab.coder.colly.domain.community.domain.model.PostType;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
@@ -28,11 +29,43 @@ public final class CommunityPostPolicy {
                     || command.meetingAt() == null
                     || command.maxParticipants() == null
                     || command.joinPolicy() == null
+                    || command.audienceScope() == null
             ) {
                 throw new DomainException(
                         ErrorCode.INVALID_POST_PAYLOAD,
-                        "Gathering post requires destination/meeting fields"
+                        "Gathering post requires destination/meeting/audience fields"
                 );
+            }
+
+            if (command.audienceScope() == GatheringAudienceScope.ACCOMMODATION_ONLY) {
+                if (command.accommodationId() == null
+                        || command.audienceStayStartDate() == null
+                        || command.audienceStayEndDate() == null
+                ) {
+                    throw new DomainException(
+                            ErrorCode.INVALID_POST_PAYLOAD,
+                            "Accommodation-only gathering requires accommodation and stay dates"
+                    );
+                }
+
+                if (command.audienceStayStartDate().isAfter(command.audienceStayEndDate())) {
+                    throw new DomainException(
+                            ErrorCode.INVALID_POST_PAYLOAD,
+                            "Audience stay start date must be before or equal to end date"
+                    );
+                }
+            }
+
+            if (command.audienceScope() == GatheringAudienceScope.CITY_WIDE) {
+                if (command.accommodationId() != null
+                        || command.audienceStayStartDate() != null
+                        || command.audienceStayEndDate() != null
+                ) {
+                    throw new DomainException(
+                            ErrorCode.INVALID_POST_PAYLOAD,
+                            "City-wide gathering cannot include accommodation fields"
+                    );
+                }
             }
             return;
         }
@@ -43,10 +76,14 @@ public final class CommunityPostPolicy {
                     || command.meetingAt() != null
                     || command.maxParticipants() != null
                     || command.joinPolicy() != null
+                    || command.audienceScope() != null
+                    || command.accommodationId() != null
+                    || command.audienceStayStartDate() != null
+                    || command.audienceStayEndDate() != null
             ) {
                 throw new DomainException(
                         ErrorCode.INVALID_POST_PAYLOAD,
-                        "Free feed post cannot include gathering fields"
+                        "Free feed post cannot include gathering/audience fields"
                 );
             }
             return;

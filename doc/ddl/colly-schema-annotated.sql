@@ -83,6 +83,50 @@ create table colly.community_join
     user_id    bigint                                               not null
 );
 
+-- 숙소 마스터 테이블
+create table colly.accommodations
+(
+    -- PK
+    id            bigint auto_increment
+        primary key,
+    -- 생성 시각 (Auditing)
+    created_at    datetime(6)                     not null,
+    -- 수정 시각 (Auditing)
+    updated_at    datetime(6)                     not null,
+    -- 국가 코드 (예: AU)
+    country_code  varchar(2)                      not null,
+    -- 도시 코드 (예: SYD)
+    city_code     varchar(50)                     not null,
+    -- 숙소명
+    name          varchar(200)                    not null,
+    -- 주소 1
+    address_line1 varchar(255)                    null,
+    -- 주소 2
+    address_line2 varchar(255)                    null
+);
+
+-- 사용자 숙박 이력 테이블
+create table colly.user_stays
+(
+    -- PK
+    id               bigint auto_increment
+        primary key,
+    -- 생성 시각 (Auditing)
+    created_at       datetime(6)                     not null,
+    -- 수정 시각 (Auditing)
+    updated_at       datetime(6)                     not null,
+    -- 사용자 ID
+    user_id          bigint                          not null,
+    -- 숙소 PK
+    accommodation_id bigint                          not null,
+    -- 체크인 일자
+    check_in         date                            not null,
+    -- 체크아웃 일자
+    check_out        date                            not null,
+    -- 객실 타입
+    room_type        varchar(120)                    null
+);
+
 -- 커뮤니티 게시글 테이블 (모임글/자유형글)
 create table colly.community_post
 (
@@ -95,8 +139,20 @@ create table colly.community_post
     updated_at       datetime(6)                     not null,
     -- 작성자 사용자 ID
     author_user_id   bigint                          not null,
+    -- 국가 코드 (예: AU)
+    country_code     varchar(2)                      not null,
     -- 도시 코드 (예: SYD)
     city_code        varchar(50)                     not null,
+    -- 게시글 타입
+    type             varchar(20)                     not null,
+    -- 모임글 대상 범위
+    audience_scope   varchar(30)                     null,
+    -- 숙소 PK (숙소 대상 모임일 때만 사용)
+    accommodation_id bigint                          null,
+    -- 대상 숙박 시작일
+    audience_stay_start_date date                    null,
+    -- 대상 숙박 종료일
+    audience_stay_end_date date                      null,
     -- 게시글 본문
     content          varchar(4000)                   not null,
     -- 모임 목적지
@@ -112,9 +168,7 @@ create table colly.community_post
     -- 모임 시각
     meeting_at       datetime(6)                     null,
     -- 모임 장소
-    meeting_place    varchar(200)                    null,
-    -- 게시글 타입
-    type             varchar(20)                    not null
+    meeting_place    varchar(200)                    null
 );
 
 -- 사용자 신고 이력 테이블

@@ -2,7 +2,7 @@
 
 ## 1. 문서 정보
 - 도메인: community
-- 작성일: 2026-03-27
+- 작성일: 2026-03-29
 - 작성자: Codex
 
 ## 2. 도메인 개요
@@ -21,6 +21,9 @@
 - 게시글 타입:
   - `GATHERING`: 모임 모집형
   - `FREE_FEED`: 자유형 게시글
+- 모임글 대상 범위:
+  - `ACCOMMODATION_ONLY`: 내 숙소 인원 대상
+  - `CITY_WIDE`: 도시 전체 대상
 - 공통 에러 코드:
   - `POST_NOT_FOUND`, `JOIN_NOT_FOUND`, `JOIN_NOT_ALLOWED`, `JOIN_ALREADY_EXISTS`
   - `INVALID_POST_PAYLOAD`, `FORBIDDEN_ACTION`, `USER_RESTRICTED`
@@ -41,13 +44,17 @@
 - Path: `/api/community/posts`
 - 설명: `GATHERING` 또는 `FREE_FEED` 게시글을 생성한다.
 
-#### Request Body
+#### Request Body (GATHERING + ACCOMMODATION_ONLY 예시)
 ```json
 {
   "authorUserId": 1,
   "countryCode": "AU",
   "cityCode": "SYD",
   "type": "GATHERING",
+  "audienceScope": "ACCOMMODATION_ONLY",
+  "accommodationId": 1001,
+  "audienceStayStartDate": "2026-03-25",
+  "audienceStayEndDate": "2026-04-05",
   "content": "블루마운틴 같이 가실 분",
   "imageUrl": null,
   "locationName": "Sydney",
@@ -59,13 +66,39 @@
 }
 ```
 
+#### Request Body (GATHERING + CITY_WIDE 예시)
+```json
+{
+  "authorUserId": 1,
+  "countryCode": "AU",
+  "cityCode": "SYD",
+  "type": "GATHERING",
+  "audienceScope": "CITY_WIDE",
+  "accommodationId": null,
+  "audienceStayStartDate": null,
+  "audienceStayEndDate": null,
+  "content": "시드니 시티 야경 같이 보실 분",
+  "imageUrl": null,
+  "locationName": "Sydney",
+  "destination": "Darling Harbour",
+  "meetingPlace": "Wynyard Station",
+  "meetingAt": "2026-03-27T20:00:00",
+  "maxParticipants": 8,
+  "joinPolicy": "FREE"
+}
+```
+
 #### Request Description
 | Field | Type | Required | Description |
 |---|---|---|---|
 | authorUserId | Number | Y | 작성자 사용자 ID |
-| countryCode | String | Y | 국가 코드(초기 `AU`) |
-| cityCode | String | Y | 도시 코드(초기 `SYD`) |
+| countryCode | String | Y | 국가 코드(예: `AU`) |
+| cityCode | String | Y | 도시 코드(예: `SYD`) |
 | type | Enum | Y | `GATHERING` 또는 `FREE_FEED` |
+| audienceScope | Enum | 조건부 | `GATHERING` 필수 (`ACCOMMODATION_ONLY`/`CITY_WIDE`) |
+| accommodationId | Number | 조건부 | `GATHERING + ACCOMMODATION_ONLY` 필수 |
+| audienceStayStartDate | Date | 조건부 | `GATHERING + ACCOMMODATION_ONLY` 필수 |
+| audienceStayEndDate | Date | 조건부 | `GATHERING + ACCOMMODATION_ONLY` 필수 |
 | content | String | Y | 게시글 본문 |
 | imageUrl | String | N | 이미지 URL |
 | locationName | String | N | 위치 텍스트 |
@@ -75,6 +108,13 @@
 | maxParticipants | Number | 조건부 | `GATHERING` 필수 |
 | joinPolicy | Enum | 조건부 | `GATHERING` 필수 (`APPROVAL`/`FREE`) |
 
+#### 타입/대상별 유효성 규칙
+| 타입 | audienceScope | accommodationId | audienceStayStartDate / audienceStayEndDate | destination/meeting/joinPolicy/maxParticipants |
+|---|---|---|---|---|
+| `FREE_FEED` | 금지 | 금지 | 금지 | 금지 |
+| `GATHERING` + `CITY_WIDE` | 필수 | 금지 | 금지 | 필수 |
+| `GATHERING` + `ACCOMMODATION_ONLY` | 필수 | 필수 | 필수(`start <= end`) | 필수 |
+
 #### Response Body (201)
 ```json
 {
@@ -83,6 +123,10 @@
   "countryCode": "AU",
   "cityCode": "SYD",
   "type": "GATHERING",
+  "audienceScope": "ACCOMMODATION_ONLY",
+  "accommodationId": 1001,
+  "audienceStayStartDate": "2026-03-25",
+  "audienceStayEndDate": "2026-04-05",
   "content": "블루마운틴 같이 가실 분",
   "imageUrl": null,
   "locationName": "Sydney",
@@ -97,7 +141,7 @@
 #### Error Response
 | Code | Message | Description |
 |---|---|---|
-| INVALID_POST_PAYLOAD | Gathering post requires ... | 타입별 필드 정책 위반 |
+| INVALID_POST_PAYLOAD | Gathering post requires ... | 타입/대상별 필드 정책 위반 |
 | USER_RESTRICTED | User is restricted until ... | 제재 기간 중 작성 시도 |
 
 ### 5.2 게시글 조회
@@ -121,6 +165,10 @@
     "countryCode": "AU",
     "cityCode": "SYD",
     "type": "FREE_FEED",
+    "audienceScope": null,
+    "accommodationId": null,
+    "audienceStayStartDate": null,
+    "audienceStayEndDate": null,
     "content": "오페라하우스 뷰 최고",
     "imageUrl": "https://...",
     "locationName": "Opera House",
@@ -233,9 +281,13 @@
 
 ## 6. 비즈니스 규칙
 - `FREE_FEED`는 모집 필드를 포함할 수 없다.
-- `GATHERING`은 모집 필드(목적지/장소/시간/정원/참여방식)가 필수다.
+- `FREE_FEED`는 대상 범위/숙소/숙박기간 필드를 포함할 수 없다.
+- `GATHERING`은 모집 필드(목적지/장소/시간/정원/참여방식)와 `audienceScope`가 필수다.
+- `GATHERING + ACCOMMODATION_ONLY`는 `accommodationId`와 숙박기간(`audienceStayStartDate`, `audienceStayEndDate`)이 필수다.
+- `GATHERING + CITY_WIDE`는 숙소/숙박기간 필드를 포함할 수 없다.
 - 신고 3회 이상 누적 시 `7일` 커뮤니티 활동 제한을 부여한다.
 
 ## 7. 이력
+- v0.3: 모임글 대상 범위(`audienceScope`) 및 숙소 PK(`accommodationId`) 기반 정책/필드 추가
 - v0.2: 국가 코드(`countryCode`) 기반 조회/응답 필드 추가
 - v0.1: 게시글/참여/신고/제재 API 최초 작성

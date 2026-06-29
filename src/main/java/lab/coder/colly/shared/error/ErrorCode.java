@@ -23,7 +23,10 @@ public enum ErrorCode {
     MAGIC_LINK_NOT_FOUND("매직링크를 찾을 수 없음", "Magic Link Not Found"),
     MAGIC_LINK_EXPIRED("매직링크 만료됨", "Magic Link Expired"),
     MAGIC_LINK_ALREADY_USED("이미 사용된 매직링크", "Magic Link Already Used"),
-    MAGIC_LINK_RATE_LIMITED("매직링크 요청이 너무 잦음", "Magic Link Rate Limited");
+    MAGIC_LINK_RATE_LIMITED("매직링크 요청이 너무 잦음", "Magic Link Rate Limited"),
+    MAGIC_LINK_EMAIL_SEND_FAILED("매직링크 메일 발송 실패", "Magic Link Email Send Failed"),
+    REFRESH_TOKEN_NOT_FOUND("리프레시 토큰을 찾을 수 없음", "Refresh Token Not Found"),
+    REFRESH_TOKEN_EXPIRED("리프레시 토큰이 만료됨", "Refresh Token Expired");
 
     private final String koLabel;
     private final String engLabel;

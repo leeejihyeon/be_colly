@@ -11,7 +11,9 @@
 | 완료 | 신고 3회 누적 7일 제한 로직 구현 | `src/main/java/lab/coder/colly/domain/community` | 완료 |
 | 완료 | 인증/커뮤니티 API 명세서 최신화 | `doc/api/auth`, `doc/api/community` | 완료 |
 | 완료 | 인증/커뮤니티 DDL 문서 최신화 | `doc/ddl/*.sql` | 완료 |
-| 다음 | 실제 메일 발송 연동 (magicToken 외부 발송) | `domain/auth/application/service/AuthService.java` | SMTP/메일서비스 연동 후 토큰 응답 직접 노출 제거 |
+| 완료 | 실제 메일 발송 연동 (SMTP) | `domain/auth/adapter/out/mail` / `domain/auth/application/service/AuthService.java` | 매직링크 토큰을 메일 본문으로 전달 |
+| 완료 | 인증 세션 갱신/로그아웃 API 연결 (리프레시 토큰 기반) | `src/features/auth/api` / `src/shared/lib/http/httpClient.ts` / `src/shared/lib/auth/AuthGate.tsx` | 토큰 기반 세션 복구, 만료 시 갱신 후 자동 로그인 유지 |
+| 완료 | 만료 세션 배치 정리 | `src/main/java/lab/coder/colly/domain/auth/application/service/AuthSessionCleanupScheduler.java` | 만료된 세션 주기 정리 |
 | 다음 | 커뮤니티 API 인증 방식 개선 | `domain/community/adapter/in/web/CommunityController.java` | 사용자 ID 파라미터 제거, 토큰 기반 사용자 식별 적용 |
 | 다음 | 숙소/체류 겹침 기능 구현 | `domain/accommodation` | 숙소 등록 및 overlap 조회 API 완료 |
 

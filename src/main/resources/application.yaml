@@ -16,6 +16,24 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: colly.auth@gmail.com
+    password: "kefb rkul dfrx dnte"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+colly:
+  auth:
+    mail:
+      from: colly.auth@gmail.com
+      magic-link-base-url: http://localhost:18080
+      app-deep-link-base: collyapp://auth/magic-link
 
 logging:
   level:

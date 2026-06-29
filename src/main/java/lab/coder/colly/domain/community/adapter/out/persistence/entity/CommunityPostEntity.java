@@ -8,7 +8,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lab.coder.colly.domain.community.domain.model.GatheringAudienceScope;
 import lab.coder.colly.domain.community.domain.model.JoinPolicy;
 import lab.coder.colly.domain.community.domain.model.PostType;
 import lab.coder.colly.shared.persistence.BaseEntity;
@@ -38,6 +40,16 @@ public class CommunityPostEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PostType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private GatheringAudienceScope audienceScope;
+
+    private Long accommodationId;
+
+    private LocalDate audienceStayStartDate;
+
+    private LocalDate audienceStayEndDate;
 
     @Column(nullable = false, length = 4000)
     private String content;
@@ -70,6 +82,10 @@ public class CommunityPostEntity extends BaseEntity {
      * @param countryCode 국가 코드
      * @param cityCode 게시글 대상 도시 코드
      * @param type 게시글 타입
+     * @param audienceScope 모임글 대상 범위(숙소/도시)
+     * @param accommodationId 숙소 식별자
+     * @param audienceStayStartDate 대상 숙박 시작일
+     * @param audienceStayEndDate 대상 숙박 종료일
      * @param content 본문
      * @param imageUrl 이미지 URL
      * @param locationName 자유형글 위치명
@@ -85,6 +101,10 @@ public class CommunityPostEntity extends BaseEntity {
             String countryCode,
             String cityCode,
             PostType type,
+            GatheringAudienceScope audienceScope,
+            Long accommodationId,
+            LocalDate audienceStayStartDate,
+            LocalDate audienceStayEndDate,
             String content,
             String imageUrl,
             String locationName,
@@ -99,6 +119,10 @@ public class CommunityPostEntity extends BaseEntity {
         this.countryCode = countryCode;
         this.cityCode = cityCode;
         this.type = type;
+        this.audienceScope = audienceScope;
+        this.accommodationId = accommodationId;
+        this.audienceStayStartDate = audienceStayStartDate;
+        this.audienceStayEndDate = audienceStayEndDate;
         this.content = content;
         this.imageUrl = imageUrl;
         this.locationName = locationName;

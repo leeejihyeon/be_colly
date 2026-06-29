@@ -172,6 +172,51 @@ public class AuthPersistenceAdapter implements AuthMagicLinkPort, AuthUserPort, 
     }
 
     /**
+     * 리프레시 토큰 해시로 인증 세션을 조회한다.
+     *
+     * @param refreshTokenHash 리프레시 토큰 해시
+     * @return 인증 세션 조회 결과
+     */
+    @Override
+    public Optional<AuthSession> findByRefreshTokenHash(String refreshTokenHash) {
+        return authSessionJpaRepository.findByRefreshTokenHash(refreshTokenHash)
+                .map(entity -> AuthSession.restore(
+                        entity.getId(),
+                        entity.getUserId(),
+                        entity.getRefreshTokenHash(),
+                        entity.getExpiresAt()
+                ));
+    }
+
+    /**
+     * 리프레시 토큰 해시를 기준으로 인증 세션을 삭제한다.
+     *
+     * @param refreshTokenHash 리프레시 토큰 해시
+     */
+    @Override
+    public void deleteByRefreshTokenHash(String refreshTokenHash) {
+        authSessionJpaRepository.deleteByRefreshTokenHash(refreshTokenHash);
+    }
+
+    /**
+     * 사용자별 인증 세션을 모두 삭제한다.
+     *
+     * @param userId 사용자 ID
+     */
+    @Override
+    public void deleteByUserId(Long userId) {
+        authSessionJpaRepository.deleteByUserId(userId);
+    }
+
+    /**
+     * 만료된 세션을 모두 삭제한다.
+     */
+    @Override
+    public void deleteExpiredSessions() {
+        authSessionJpaRepository.deleteByExpiresAtLessThanEqual(LocalDateTime.now());
+    }
+
+    /**
      * 소셜 제공자 식별자로 인증 수단 연결 정보를 조회한다.
      *
      * @param provider       인증 제공자

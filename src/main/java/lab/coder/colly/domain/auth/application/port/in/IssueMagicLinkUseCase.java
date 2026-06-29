@@ -26,12 +26,10 @@ public interface IssueMagicLinkUseCase {
      *
      * @param email            정규화된 이메일
      * @param expiresInSeconds 토큰 만료 시간(초)
-     * @param magicToken       매직링크 검증 토큰
      */
     record MagicLinkIssueResult(
             String email,
-            long expiresInSeconds,
-            String magicToken
+            long expiresInSeconds
     ) {
     }
 }
