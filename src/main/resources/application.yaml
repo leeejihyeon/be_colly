@@ -5,35 +5,49 @@ spring:
   application:
     name: colly
   datasource:
-    url: jdbc:mysql://localhost:3306/colly?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: ${COLLY_DB_URL:jdbc:mysql://localhost:3306/colly?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 1234
+    username: ${COLLY_DB_USERNAME:root}
+    password: ${COLLY_DB_PASSWORD:1234}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${COLLY_JPA_DDL_AUTO:update}
     properties:
       hibernate:
         format_sql: true
     open-in-view: false
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: colly.auth@gmail.com
-    password: "kefb rkul dfrx dnte"
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${MAIL_SMTP_AUTH:true}
           starttls:
-            enable: true
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
 
 colly:
   auth:
+    jwt:
+      issuer: ${COLLY_AUTH_JWT_ISSUER:colly-api}
+      secret: ${COLLY_AUTH_JWT_SECRET:}
+      access-token-expire-seconds: ${COLLY_AUTH_JWT_ACCESS_TOKEN_EXPIRE_SECONDS:900}
+      refresh-token-expire-seconds: ${COLLY_AUTH_JWT_REFRESH_TOKEN_EXPIRE_SECONDS:2592000}
     mail:
-      from: colly.auth@gmail.com
-      magic-link-base-url: http://localhost:18080
-      app-deep-link-base: collyapp://auth/magic-link
+      from: ${COLLY_AUTH_MAIL_FROM:${MAIL_USERNAME:}}
+      magic-link-base-url: ${COLLY_AUTH_MAGIC_LINK_BASE_URL:http://localhost:18080}
+      app-deep-link-base: ${COLLY_AUTH_APP_DEEP_LINK_BASE:collyapp://auth/magic-link}
+    social:
+      google:
+        issuer: ${COLLY_AUTH_GOOGLE_ISSUER:https://accounts.google.com}
+        jwk-set-uri: ${COLLY_AUTH_GOOGLE_JWK_SET_URI:https://www.googleapis.com/oauth2/v3/certs}
+        audience: ${COLLY_AUTH_GOOGLE_AUDIENCE:}
+      apple:
+        issuer: ${COLLY_AUTH_APPLE_ISSUER:https://appleid.apple.com}
+        jwk-set-uri: ${COLLY_AUTH_APPLE_JWK_SET_URI:https://appleid.apple.com/auth/keys}
+        audience: ${COLLY_AUTH_APPLE_AUDIENCE:}
 
 logging:
   level:

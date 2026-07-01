@@ -1,8 +1,5 @@
 package lab.coder.colly.shared.error;
 
-import lombok.Getter;
-
-@Getter
 public class DomainException extends RuntimeException {
 
     private final ErrorCode errorCode;
@@ -10,5 +7,9 @@ public class DomainException extends RuntimeException {
     public DomainException(ErrorCode errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
     }
 }

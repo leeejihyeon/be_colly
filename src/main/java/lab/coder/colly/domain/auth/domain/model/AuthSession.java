@@ -15,6 +15,7 @@ public class AuthSession {
 
     private final Long id;
     private final Long userId;
+    private final AuthProvider provider;
     private final String refreshTokenHash;
     private final LocalDateTime expiresAt;
 
@@ -22,18 +23,21 @@ public class AuthSession {
      * 신규 인증 세션 정보를 생성한다.
      *
      * @param userId           사용자 식별자
+     * @param provider         로그인 인증 제공자
      * @param refreshTokenHash 리프레시 토큰 해시
      * @param expiresAt        세션 만료 시각
      * @return 신규 인증 세션 정보
      */
     public static AuthSession create(
             Long userId,
+            AuthProvider provider,
             String refreshTokenHash,
             LocalDateTime expiresAt
     ) {
         return new AuthSession(
                 null,
                 userId,
+                provider,
                 refreshTokenHash,
                 expiresAt
         );
@@ -44,6 +48,7 @@ public class AuthSession {
      *
      * @param id               식별자
      * @param userId           사용자 식별자
+     * @param provider         로그인 인증 제공자
      * @param refreshTokenHash 리프레시 토큰 해시
      * @param expiresAt        세션 만료 시각
      * @return 복원된 인증 세션 정보
@@ -51,12 +56,14 @@ public class AuthSession {
     public static AuthSession restore(
             Long id,
             Long userId,
+            AuthProvider provider,
             String refreshTokenHash,
             LocalDateTime expiresAt
     ) {
         return new AuthSession(
                 id,
                 userId,
+                provider,
                 refreshTokenHash,
                 expiresAt
         );

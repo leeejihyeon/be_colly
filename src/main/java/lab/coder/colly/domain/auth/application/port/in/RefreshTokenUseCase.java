@@ -1,5 +1,7 @@
 package lab.coder.colly.domain.auth.application.port.in;
 
+import lab.coder.colly.domain.auth.domain.model.AuthProvider;
+
 /**
  * 리프레시 토큰 기반 인증 세션 갱신 유스케이스.
  */
@@ -28,12 +30,18 @@ public interface RefreshTokenUseCase {
      * @param email        사용자 이메일
      * @param accessToken  액세스 토큰
      * @param refreshToken 새로 발급된 리프레시 토큰
+     * @param expiresInSeconds 액세스 토큰 만료 시간(초)
+     * @param refreshExpiresInSeconds 리프레시 토큰 만료 시간(초)
+     * @param provider 로그인 인증 제공자
      */
     record LoginResult(
             Long userId,
             String email,
             String accessToken,
-            String refreshToken
+            String refreshToken,
+            long expiresInSeconds,
+            long refreshExpiresInSeconds,
+            AuthProvider provider
     ) {
     }
 }

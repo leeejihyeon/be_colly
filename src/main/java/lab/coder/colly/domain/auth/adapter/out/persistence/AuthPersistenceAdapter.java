@@ -158,6 +158,7 @@ public class AuthPersistenceAdapter implements AuthMagicLinkPort, AuthUserPort, 
                         new AuthSessionEntity(
                                 session.getId(),
                                 session.getUserId(),
+                                session.getProvider(),
                                 session.getRefreshTokenHash(),
                                 session.getExpiresAt()
                         )
@@ -166,6 +167,7 @@ public class AuthPersistenceAdapter implements AuthMagicLinkPort, AuthUserPort, 
         return AuthSession.restore(
                 saved.getId(),
                 saved.getUserId(),
+                saved.getProvider(),
                 saved.getRefreshTokenHash(),
                 saved.getExpiresAt()
         );
@@ -183,6 +185,7 @@ public class AuthPersistenceAdapter implements AuthMagicLinkPort, AuthUserPort, 
                 .map(entity -> AuthSession.restore(
                         entity.getId(),
                         entity.getUserId(),
+                        entity.getProvider(),
                         entity.getRefreshTokenHash(),
                         entity.getExpiresAt()
                 ));

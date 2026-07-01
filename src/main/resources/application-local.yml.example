@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    username: root
+    password: 1234
+  mail:
+    username: colly.auth@gmail.com
+    password: replace-with-your-gmail-app-password
+
+colly:
+  auth:
+    jwt:
+      secret: replace-with-a-32-byte-or-longer-secret
+    mail:
+      from: colly.auth@gmail.com
+      magic-link-base-url: http://localhost:18080
+      app-deep-link-base: collyapp://auth/magic-link
+    social:
+      google:
+        audience: replace-with-google-web-client-id.apps.googleusercontent.com
+      apple:
+        audience: com.collyapp

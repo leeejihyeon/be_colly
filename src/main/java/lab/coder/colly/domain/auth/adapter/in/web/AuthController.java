@@ -1,23 +1,28 @@
 package lab.coder.colly.domain.auth.adapter.in.web;
 
 import jakarta.validation.Valid;
+import lab.coder.colly.domain.auth.adapter.in.web.dto.AppleSocialLoginRequest;
+import lab.coder.colly.domain.auth.adapter.in.web.dto.GoogleSocialLoginRequest;
 import lab.coder.colly.domain.auth.adapter.in.web.dto.RequestMagicLinkRequest;
 import lab.coder.colly.domain.auth.adapter.in.web.dto.RefreshTokenRequest;
-import lab.coder.colly.domain.auth.adapter.in.web.dto.SocialLoginRequest;
 import lab.coder.colly.domain.auth.adapter.in.web.dto.SignOutRequest;
 import lab.coder.colly.domain.auth.adapter.in.web.dto.VerifyMagicLinkRequest;
+import lab.coder.colly.domain.auth.application.port.in.GetCurrentUserUseCase;
 import lab.coder.colly.domain.auth.application.port.in.IssueMagicLinkUseCase;
 import lab.coder.colly.domain.auth.application.port.in.RefreshTokenUseCase;
 import lab.coder.colly.domain.auth.application.port.in.SocialLoginUseCase;
 import lab.coder.colly.domain.auth.application.port.in.SignOutUseCase;
+import lab.coder.colly.domain.auth.application.port.in.SignOutAllUseCase;
 import lab.coder.colly.domain.auth.application.port.in.VerifyMagicLinkUseCase;
 import lab.coder.colly.domain.auth.domain.model.AuthProvider;
 import lab.coder.colly.shared.api.ApiResponse;
 import lab.coder.colly.shared.api.ApiResponses;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
+import lab.coder.colly.shared.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +40,8 @@ public class AuthController {
     private final SocialLoginUseCase socialLoginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final SignOutUseCase signOutUseCase;
+    private final SignOutAllUseCase signOutAllUseCase;
+    private final GetCurrentUserUseCase getCurrentUserUseCase;
 
     /**
      * 매직링크 발급을 요청한다.
@@ -131,24 +138,54 @@ public class AuthController {
     }
 
     /**
-     * 소셜 계정으로 로그인 또는 회원가입을 처리한다.
+     * 현재 로그인 사용자의 모든 세션을 종료한다.
+     *
+     * @param authenticatedUser 현재 인증 사용자
+     * @return 빈 응답
+     */
+    @PostMapping("/signout-all")
+    public ResponseEntity<ApiResponse<Void>> signOutAll(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        signOutAllUseCase.signOutAll(authenticatedUser.userId());
+        return ApiResponses.ok(null);
+    }
+
+    /**
+     * 현재 로그인 사용자를 조회한다.
+     *
+     * @param authenticatedUser 현재 인증 사용자
+     * @return 사용자 정보 응답
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<GetCurrentUserUseCase.CurrentUserView>> me(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ApiResponses.ok(
+                getCurrentUserUseCase.getCurrentUser(
+                        authenticatedUser.userId(),
+                        authenticatedUser.provider()
+                )
+        );
+    }
+
+    /**
+     * Google 소셜 계정으로 로그인 또는 회원가입을 처리한다.
      *
      * @param request 소셜 로그인 요청 바디
      * @return 로그인 결과 응답
      */
-    @PostMapping("/social/login")
-    public ResponseEntity<ApiResponse<SocialLoginUseCase.SocialLoginResult>> socialLogin(
-            @Valid @RequestBody SocialLoginRequest request
+    @PostMapping("/social/google")
+    public ResponseEntity<ApiResponse<VerifyMagicLinkUseCase.LoginResult>> googleLogin(
+            @Valid @RequestBody GoogleSocialLoginRequest request
     ) {
-        AuthProvider provider = parseProvider(request.provider());
-
-        SocialLoginUseCase.SocialLoginResult result =
+        VerifyMagicLinkUseCase.LoginResult result =
                 socialLoginUseCase.login(
                         new SocialLoginUseCase.SocialLoginCommand(
-                                provider,
-                                request.providerUserId(),
-                                request.email(),
-                                request.name()
+                                AuthProvider.GOOGLE,
+                                request.idToken(),
+                                null,
+                                null
                         )
                 );
 
@@ -156,24 +193,25 @@ public class AuthController {
     }
 
     /**
-     * 소셜 제공자 문자열을 enum으로 변환한다.
+     * Apple 소셜 계정으로 로그인 또는 회원가입을 처리한다.
      *
-     * @param provider 제공자 문자열
-     * @return 소셜 제공자 enum
+     * @param request 소셜 로그인 요청 바디
+     * @return 로그인 결과 응답
      */
-    private AuthProvider parseProvider(
-            String provider
+    @PostMapping("/social/apple")
+    public ResponseEntity<ApiResponse<VerifyMagicLinkUseCase.LoginResult>> appleLogin(
+            @Valid @RequestBody AppleSocialLoginRequest request
     ) {
-        try {
+        VerifyMagicLinkUseCase.LoginResult result =
+                socialLoginUseCase.login(
+                        new SocialLoginUseCase.SocialLoginCommand(
+                                AuthProvider.APPLE,
+                                request.identityToken(),
+                                request.authorizationCode(),
+                                request.name()
+                        )
+                );
 
-            return AuthProvider.valueOf(provider.trim().toUpperCase());
-
-        } catch (IllegalArgumentException ex) {
-
-            throw new DomainException(
-                    ErrorCode.AUTH_INVALID_PROVIDER,
-                    "Unsupported provider: " + provider
-            );
-        }
+        return ApiResponses.ok(result);
     }
 }

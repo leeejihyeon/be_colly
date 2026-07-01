@@ -13,7 +13,6 @@ import lab.coder.colly.domain.community.domain.model.PostType;
 /**
  * 게시글 생성 요청 DTO.
  *
- * @param authorUserId    작성자 사용자 ID
  * @param countryCode     국가 코드
  * @param cityCode        도시 코드
  * @param type            게시글 타입
@@ -31,9 +30,6 @@ import lab.coder.colly.domain.community.domain.model.PostType;
  * @param joinPolicy      참여 정책
  */
 public record CreateCommunityPostRequest(
-        @NotNull
-        Long authorUserId,
-
         @NotBlank
         @Size(min = 2, max = 2)
         String countryCode,

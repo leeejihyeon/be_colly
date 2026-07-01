@@ -1,5 +1,7 @@
 package lab.coder.colly.domain.auth.application.port.in;
 
+import lab.coder.colly.domain.auth.domain.model.AuthProvider;
+
 /**
  * 매직링크 검증 유스케이스.
  */
@@ -28,12 +30,18 @@ public interface VerifyMagicLinkUseCase {
      * @param email        사용자 이메일
      * @param accessToken  액세스 토큰
      * @param refreshToken 리프레시 토큰
+     * @param expiresInSeconds 액세스 토큰 만료 시간(초)
+     * @param refreshExpiresInSeconds 리프레시 토큰 만료 시간(초)
+     * @param provider 로그인 인증 제공자
      */
     record LoginResult(
             Long userId,
             String email,
             String accessToken,
-            String refreshToken
+            String refreshToken,
+            long expiresInSeconds,
+            long refreshExpiresInSeconds,
+            AuthProvider provider
     ) {
     }
 }

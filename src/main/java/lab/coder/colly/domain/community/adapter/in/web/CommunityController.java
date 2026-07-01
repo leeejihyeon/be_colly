@@ -9,8 +9,10 @@ import lab.coder.colly.domain.community.application.port.in.*;
 import lab.coder.colly.domain.community.domain.model.PostType;
 import lab.coder.colly.shared.api.ApiResponse;
 import lab.coder.colly.shared.api.ApiResponses;
+import lab.coder.colly.shared.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,12 +37,13 @@ public class CommunityController {
      */
     @PostMapping("/posts")
     public ResponseEntity<ApiResponse<CommunityPostView>> createPost(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Valid @RequestBody CreateCommunityPostRequest request
     ) {
         CommunityPostView created =
                 createCommunityPostUseCase.createPost(
                         new CreateCommunityPostUseCase.CreateCommunityPostCommand(
-                                request.authorUserId(),
+                                authenticatedUser.userId(),
                                 request.countryCode(),
                                 request.cityCode(),
                                 request.type(),
@@ -99,11 +102,12 @@ public class CommunityController {
     @PostMapping("/posts/{postId}/join")
     public ResponseEntity<ApiResponse<CommunityJoinView>> join(
             @PathVariable Long postId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Valid @RequestBody JoinRequest request
     ) {
         CommunityJoinView join =
                 joinCommunityUseCase.join(
-                        new JoinCommunityUseCase.JoinCommunityCommand(postId, request.userId())
+                        new JoinCommunityUseCase.JoinCommunityCommand(postId, authenticatedUser.userId())
                 );
 
         return ApiResponses.created(join);
@@ -119,13 +123,14 @@ public class CommunityController {
     @PatchMapping("/joins/{joinId}")
     public ResponseEntity<ApiResponse<CommunityJoinView>> review(
             @PathVariable Long joinId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Valid @RequestBody ReviewJoinRequest request
     ) {
         CommunityJoinView reviewed =
                 reviewCommunityJoinUseCase.review(
                         new ReviewCommunityJoinUseCase.ReviewCommunityJoinCommand(
                                 joinId,
-                                request.hostUserId(),
+                                authenticatedUser.userId(),
                                 request.status()
                         )
                 );
@@ -141,12 +146,13 @@ public class CommunityController {
      */
     @PostMapping("/reports")
     public ResponseEntity<ApiResponse<ReportUserUseCase.ReportResult>> report(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Valid @RequestBody ReportRequest request
     ) {
         ReportUserUseCase.ReportResult result =
                 reportUserUseCase.report(
                         new ReportUserUseCase.ReportCommand(
-                                request.reporterUserId(),
+                                authenticatedUser.userId(),
                                 request.targetUserId(),
                                 request.reason()
                         )
@@ -161,10 +167,10 @@ public class CommunityController {
      * @param userId 사용자 식별자
      * @return 제재 상태 응답
      */
-    @GetMapping("/restrictions/{userId}")
+    @GetMapping("/restrictions/me")
     public ResponseEntity<ApiResponse<GetRestrictionUseCase.RestrictionView>> getRestriction(
-            @PathVariable Long userId
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return ApiResponses.ok(getRestrictionUseCase.getActiveRestriction(userId));
+        return ApiResponses.ok(getRestrictionUseCase.getActiveRestriction(authenticatedUser.userId()));
     }
 }

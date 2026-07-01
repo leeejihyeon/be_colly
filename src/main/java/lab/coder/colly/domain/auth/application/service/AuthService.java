@@ -1,26 +1,35 @@
 package lab.coder.colly.domain.auth.application.service;
 
+import java.time.LocalDateTime;
+import lab.coder.colly.domain.auth.application.port.in.GetCurrentUserUseCase;
 import lab.coder.colly.domain.auth.application.port.in.IssueMagicLinkUseCase;
+import lab.coder.colly.domain.auth.application.port.in.RefreshTokenUseCase;
+import lab.coder.colly.domain.auth.application.port.in.SignOutAllUseCase;
+import lab.coder.colly.domain.auth.application.port.in.SignOutUseCase;
 import lab.coder.colly.domain.auth.application.port.in.SocialLoginUseCase;
 import lab.coder.colly.domain.auth.application.port.in.VerifyMagicLinkUseCase;
-import lab.coder.colly.domain.auth.application.port.in.RefreshTokenUseCase;
-import lab.coder.colly.domain.auth.application.port.in.SignOutUseCase;
 import lab.coder.colly.domain.auth.application.port.out.AuthIdentityPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthMagicLinkMailPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthMagicLinkPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthSessionPort;
 import lab.coder.colly.domain.auth.application.port.out.AuthUserPort;
-import lab.coder.colly.domain.auth.domain.model.*;
+import lab.coder.colly.domain.auth.domain.model.AuthIdentity;
+import lab.coder.colly.domain.auth.domain.model.AuthMagicLink;
+import lab.coder.colly.domain.auth.domain.model.AuthProvider;
+import lab.coder.colly.domain.auth.domain.model.AuthSession;
+import lab.coder.colly.domain.auth.domain.model.AuthUser;
 import lab.coder.colly.domain.auth.domain.policy.AuthEmailPolicy;
 import lab.coder.colly.domain.auth.support.AuthTokenGenerator;
 import lab.coder.colly.domain.auth.support.HashSupport;
 import lab.coder.colly.shared.error.DomainException;
 import lab.coder.colly.shared.error.ErrorCode;
+import lab.coder.colly.shared.security.AuthJwtProperties;
+import lab.coder.colly.shared.security.AuthJwtTokenService;
+import lab.coder.colly.shared.security.AuthSocialProfile;
+import lab.coder.colly.shared.security.AuthSocialTokenVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 /**
  * 인증 유스케이스 구현 서비스.
@@ -33,7 +42,9 @@ public class AuthService implements
         VerifyMagicLinkUseCase,
         SocialLoginUseCase,
         RefreshTokenUseCase,
-        SignOutUseCase {
+        SignOutUseCase,
+        SignOutAllUseCase,
+        GetCurrentUserUseCase {
 
     private static final long MAGIC_LINK_EXPIRE_SECONDS = 15 * 60;
     private static final long MAGIC_LINK_COOLDOWN_SECONDS = 60;
@@ -43,17 +54,13 @@ public class AuthService implements
     private final AuthUserPort authUserPort;
     private final AuthSessionPort authSessionPort;
     private final AuthIdentityPort authIdentityPort;
+    private final AuthJwtTokenService authJwtTokenService;
+    private final AuthJwtProperties authJwtProperties;
+    private final AuthSocialTokenVerifier authSocialTokenVerifier;
 
-    /**
-     * 이메일 기반 매직링크 발급 요청을 처리한다.
-     *
-     * @param command 발급 요청 정보(이메일)
-     * @return 발급 결과(정규화된 이메일, 만료 시간, 토큰)
-     */
     @Override
     @Transactional
     public MagicLinkIssueResult issue(MagicLinkIssueCommand command) {
-
         String email = AuthEmailPolicy.normalizeAndValidate(command.email());
 
         boolean requestedRecently =
@@ -89,16 +96,9 @@ public class AuthService implements
         );
     }
 
-    /**
-     * 매직링크 토큰을 검증하고 로그인 세션 토큰을 발급한다.
-     *
-     * @param command 검증 요청 정보(매직 토큰)
-     * @return 로그인 결과(사용자 식별자 및 세션 토큰)
-     */
     @Override
     @Transactional
-    public LoginResult verify(VerifyMagicLinkCommand command) {
-
+    public VerifyMagicLinkUseCase.LoginResult verify(VerifyMagicLinkCommand command) {
         if (command.token() == null || command.token().isBlank()) {
             throw new DomainException(
                     ErrorCode.MAGIC_LINK_NOT_FOUND,
@@ -140,19 +140,12 @@ public class AuthService implements
                         )
                 );
 
-        return issueLoginResult(user);
+        return issueLoginResult(user, AuthProvider.EMAIL_MAGIC_LINK);
     }
 
-    /**
-     * 리프레시 토큰으로 새 로그인 세션을 발급한다.
-     *
-     * @param command 리프레시 토큰 갱신 요청
-     * @return 갱신된 로그인 결과
-     */
     @Override
     @Transactional
     public RefreshTokenUseCase.LoginResult refresh(RefreshTokenUseCase.RefreshTokenCommand command) {
-
         if (command.refreshToken() == null || command.refreshToken().isBlank()) {
             throw new DomainException(
                     ErrorCode.REFRESH_TOKEN_NOT_FOUND,
@@ -188,83 +181,78 @@ public class AuthService implements
         return issueLoginResultForRefresh(session, user);
     }
 
-    /**
-     * 리프레시 토큰을 기준으로 로그아웃 처리한다.
-     *
-     * @param command 로그아웃 요청
-     */
     @Override
     @Transactional
     public void signOut(SignOutUseCase.SignOutCommand command) {
-
         if (command.refreshToken() == null || command.refreshToken().isBlank()) {
             return;
         }
 
-        String tokenHash = HashSupport.sha256(command.refreshToken());
-        authSessionPort.deleteByRefreshTokenHash(tokenHash);
+        authSessionPort.deleteByRefreshTokenHash(HashSupport.sha256(command.refreshToken()));
     }
 
-    /**
-     * 소셜 제공자 계정으로 로그인 또는 회원가입을 처리한다.
-     *
-     * @param command 소셜 로그인 요청 정보
-     * @return 로그인 결과
-     */
     @Override
     @Transactional
-    public SocialLoginResult login(SocialLoginCommand command) {
+    public void signOutAll(Long userId) {
+        authSessionPort.deleteByUserId(userId);
+    }
 
-        if (command.provider() == null) {
-            throw new DomainException(
-                    ErrorCode.AUTH_INVALID_PROVIDER,
-                    "Social provider is required"
-            );
-        }
-
-        if (command.providerUserId() == null || command.providerUserId().isBlank()) {
-            throw new DomainException(
-                    ErrorCode.AUTH_INVALID_PROVIDER_USER_ID,
-                    "Provider user id is required"
-            );
-        }
-
-        String email = AuthEmailPolicy.normalizeAndValidate(command.email());
-        String providerUserId = command.providerUserId().trim();
-
-        AuthUser user = authIdentityPort
-                .findByProviderAndProviderUserId(command.provider(), providerUserId)
-                .flatMap(identity ->
-                        authUserPort.findById(identity.getUserId())
-                )
-                .orElseGet(() ->
-                        linkOrCreateSocialUser(
-                                command.provider(),
-                                providerUserId,
-                                email,
-                                command.name()
+    @Override
+    public CurrentUserView getCurrentUser(Long userId, AuthProvider provider) {
+        AuthUser user = authUserPort.findById(userId)
+                .orElseThrow(() ->
+                        new DomainException(
+                                ErrorCode.USER_NOT_FOUND,
+                                "User not found"
                         )
                 );
 
-        LoginResult result = issueLoginResult(user);
-
-        return new SocialLoginResult(
-                result.userId(),
-                result.email(),
-                result.accessToken(),
-                result.refreshToken()
+        return new CurrentUserView(
+                user.getId(),
+                user.getEmail(),
+                provider
         );
     }
 
-    /**
-     * 소셜 로그인 시 사용자 생성/연결을 처리한다.
-     *
-     * @param provider       인증 제공자
-     * @param providerUserId 제공자 사용자 식별자
-     * @param email          사용자 이메일
-     * @param name           사용자 표시 이름
-     * @return 연결된 사용자
-     */
+    @Override
+    @Transactional
+    public VerifyMagicLinkUseCase.LoginResult login(SocialLoginCommand command) {
+        AuthSocialProfile socialProfile = switch (command.provider()) {
+            case GOOGLE -> authSocialTokenVerifier.verifyGoogle(command.idToken());
+            case APPLE -> authSocialTokenVerifier.verifyApple(command.idToken(), command.name());
+            default -> throw new DomainException(
+                    ErrorCode.AUTH_INVALID_PROVIDER,
+                    "Unsupported provider: " + command.provider()
+            );
+        };
+
+        String normalizedEmail = normalizeSocialEmail(socialProfile);
+
+        AuthUser user = authIdentityPort
+                .findByProviderAndProviderUserId(socialProfile.provider(), socialProfile.providerUserId())
+                .flatMap(identity -> authUserPort.findById(identity.getUserId()))
+                .orElseGet(() ->
+                        linkOrCreateSocialUser(
+                                socialProfile.provider(),
+                                socialProfile.providerUserId(),
+                                normalizedEmail,
+                                socialProfile.name()
+                        )
+                );
+
+        return issueLoginResult(user, socialProfile.provider());
+    }
+
+    private String normalizeSocialEmail(AuthSocialProfile socialProfile) {
+        if (socialProfile.email() == null || socialProfile.email().isBlank()) {
+            return AuthEmailPolicy.normalizeAndValidate(
+                    socialProfile.provider().name().toLowerCase() + "-" + socialProfile.providerUserId() + "@users.colly.local"
+            );
+        }
+
+        return AuthEmailPolicy.normalizeAndValidate(socialProfile.email());
+    }
+
     private AuthUser linkOrCreateSocialUser(
             AuthProvider provider,
             String providerUserId,
@@ -297,67 +285,73 @@ public class AuthService implements
         return user;
     }
 
-    /**
-     * 사용자 기준으로 액세스/리프레시 토큰을 발급한다.
-     *
-     * @param user 로그인 대상 사용자
-     * @return 로그인 결과
-     */
-    private LoginResult issueLoginResult(AuthUser user) {
-
+    private VerifyMagicLinkUseCase.LoginResult issueLoginResult(
+            AuthUser user,
+            AuthProvider provider
+    ) {
         authSessionPort.deleteExpiredSessions();
-        authSessionPort.deleteByUserId(user.getId());
 
-        String accessToken = AuthTokenGenerator.randomToken(32);
         String refreshToken = AuthTokenGenerator.randomToken(32);
-
-        authSessionPort.save(
+        AuthSession savedSession = authSessionPort.save(
                 AuthSession.create(
                         user.getId(),
+                        provider,
                         HashSupport.sha256(refreshToken),
-                        LocalDateTime.now().plusDays(14)
+                        LocalDateTime.now().plusSeconds(authJwtProperties.resolvedRefreshTokenExpireSeconds())
                 )
         );
 
-        return new LoginResult(
-                user.getId(),
-                user.getEmail(),
-                accessToken,
-                refreshToken
-        );
+        return createLoginResult(savedSession, user, refreshToken);
     }
 
-    /**
-     * 리프레시 토큰 기반 갱신용 토큰 발급.
-     *
-     * @param existingSession 기존 세션
-     * @param user           사용자
-     * @return 갱신된 로그인 결과
-     */
     private RefreshTokenUseCase.LoginResult issueLoginResultForRefresh(
             AuthSession existingSession,
             AuthUser user
     ) {
-        String oldRefreshHash = existingSession.getRefreshTokenHash();
-
-        authSessionPort.deleteByRefreshTokenHash(oldRefreshHash);
-
-        String accessToken = AuthTokenGenerator.randomToken(32);
         String refreshToken = AuthTokenGenerator.randomToken(32);
-
-        authSessionPort.save(
-                AuthSession.create(
-                        user.getId(),
+        AuthSession savedSession = authSessionPort.save(
+                AuthSession.restore(
+                        existingSession.getId(),
+                        existingSession.getUserId(),
+                        existingSession.getProvider(),
                         HashSupport.sha256(refreshToken),
-                        LocalDateTime.now().plusDays(14)
+                        LocalDateTime.now().plusSeconds(authJwtProperties.resolvedRefreshTokenExpireSeconds())
                 )
         );
 
+        VerifyMagicLinkUseCase.LoginResult loginResult = createLoginResult(savedSession, user, refreshToken);
+
         return new RefreshTokenUseCase.LoginResult(
+                loginResult.userId(),
+                loginResult.email(),
+                loginResult.accessToken(),
+                loginResult.refreshToken(),
+                loginResult.expiresInSeconds(),
+                loginResult.refreshExpiresInSeconds(),
+                loginResult.provider()
+        );
+    }
+
+    private VerifyMagicLinkUseCase.LoginResult createLoginResult(
+            AuthSession session,
+            AuthUser user,
+            String refreshToken
+    ) {
+        String accessToken = authJwtTokenService.issueAccessToken(
+                user.getId(),
+                user.getEmail(),
+                session.getProvider(),
+                session.getId()
+        );
+
+        return new VerifyMagicLinkUseCase.LoginResult(
                 user.getId(),
                 user.getEmail(),
                 accessToken,
-                refreshToken
+                refreshToken,
+                authJwtProperties.resolvedAccessTokenExpireSeconds(),
+                authJwtProperties.resolvedRefreshTokenExpireSeconds(),
+                session.getProvider()
         );
     }
 }
