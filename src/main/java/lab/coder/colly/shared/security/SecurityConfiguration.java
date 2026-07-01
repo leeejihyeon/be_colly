@@ -53,7 +53,6 @@ public class SecurityConfiguration {
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .oauth2ResourceServer(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults());

@@ -71,14 +71,14 @@ public class StayPersistenceAdapter implements AccommodationPort, UserStayPort, 
     @Override
     public boolean existsDuplicate(Long userId, Long accommodationId, LocalDate checkIn, LocalDate checkOut, Long excludeStayId) {
         if (excludeStayId == null) {
-            return userStayJpaRepository.existsByUserIdAndAccommodationIdAndCheckInAndCheckOut(
+            return userStayJpaRepository.existsDuplicate(
                     userId,
                     accommodationId,
                     checkIn,
                     checkOut
             );
         }
-        return userStayJpaRepository.existsByUserIdAndAccommodationIdAndCheckInAndCheckOutAndIdNot(
+        return userStayJpaRepository.existsDuplicateExcludingId(
                 userId,
                 accommodationId,
                 checkIn,
